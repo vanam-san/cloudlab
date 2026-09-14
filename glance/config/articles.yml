@@ -14,14 +14,10 @@
               collapse-after: 5
               cache: 3h
               feeds:
-                - url: https://selfh.st/rss/
-                  title: selfh.st
-                - url: https://ciechanow.ski/atom.xml
-                - url: https://www.joshwcomeau.com/rss.xml
-                  title: Josh Comeau
-                - url: https://samwho.dev/rss.xml
-                - url: https://ishadeed.com/feed.xml
-                  title: Ahmad Shadeed
+                - url: https://vanam.dev/rss.xml
+                  title: Vanam Dev
+                - url: https://jarmos.dev/rss.xml
+                  title: Jarmos
 
             - type: hacker-news
               limit: 15

@@ -7,22 +7,54 @@
         - type: markets
           title: Indices
           markets:
+            - symbol: ^NSEI
+              name: NIFTY 50
+            - symbol: ^BSESN
+              name: SENSEX
+            - symbol: ^NSEBANK
+              name: NIFTY Bank
+            - symbol: ^CNXIT
+              name: NIFTY IT
+            - symbol: ^CNXPHARMA
+              name: NIFTY Pharma
+            - symbol: ^CNXAUTO
+              name: NIFTY Auto
+            - symbol: ^CNXMETAL
+              name: NIFTY Metal
+            - symbol: ^CNXFMCG
+              name: NIFTY FMCG
             - symbol: SPY
               name: S&P 500
             - symbol: DX-Y.NYB
               name: Dollar Index
 
-        - type: markets
-          title: Crypto
-          markets:
-            - symbol: BTC-USD
-              name: Bitcoin
-            - symbol: ETH-USD
-              name: Ethereum
+    - size: full
+      widgets:
+        - type: rss
+          title: News
+          style: horizontal-cards
+          feeds:
+            - url: https://www.bloomberg.com/feeds/markets/news.rss
+              title: Bloomberg
+            - url: https://moxie.foxbusiness.com/google-publisher/markets.xml
+              title: Fox Business
+            - url: https://moxie.foxbusiness.com/google-publisher/technology.xml
+              title: Fox Business
 
+        - type: rss
+          title: News
+          limit: 30
+          collapse-after: 13
+          feeds:
+            - url: https://www.ft.com/technology?format=rss
+              title: Financial Times
+            - url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+              title: Wall Street Journal
+
+    - size: small
+      widgets:
         - type: markets
           title: Stocks
-          sort-by: absolute-change
           markets:
             - symbol: NVDA
               name: NVIDIA
@@ -44,45 +76,3 @@
               name: Intel
             - symbol: META
               name: Meta
-
-    - size: full
-      widgets:
-        - type: rss
-          title: News
-          style: horizontal-cards
-          feeds:
-            - url: https://www.bloomberg.com/feeds/markets/news.rss
-              title: Bloomberg
-            - url: https://moxie.foxbusiness.com/google-publisher/markets.xml
-              title: Fox Business
-            - url: https://moxie.foxbusiness.com/google-publisher/technology.xml
-              title: Fox Business
-
-        - type: group
-          widgets:
-            - type: reddit
-              show-thumbnails: true
-              subreddit: technology
-            - type: reddit
-              show-thumbnails: true
-              subreddit: wallstreetbets
-
-        - type: videos
-          style: grid-cards
-          collapse-after-rows: 3
-          channels:
-            - UCvSXMi2LebwJEM1s4bz5IBA # New Money
-            - UCV6KDgJskWaEckne5aPA0aQ # Graham Stephan
-            - UCAzhpt9DmG6PnHXjmJTvRGQ # Federal Reserve
-
-    - size: small
-      widgets:
-        - type: rss
-          title: News
-          limit: 30
-          collapse-after: 13
-          feeds:
-            - url: https://www.ft.com/technology?format=rss
-              title: Financial Times
-            - url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
-              title: Wall Street Journal

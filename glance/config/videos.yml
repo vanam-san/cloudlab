@@ -14,14 +14,27 @@
           collapse-after-rows: 3
           channels:
             - UCYO_jab_esuFRV4b17AJtAw # 3Blue1Brown
-            - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
-            - UCsBjURrPoezykLs9EqgamOA # Fireship
             - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
-            - UCXuqSBlHAE6Xw-yeJA0Tunw # Linus Tech Tips
-            - UCBJycsmduvYEL83R_U4JriQ # Marques Brownlee
             - UC9-y-6csu5WGm29I7JiwpnA # Computerphile
             - UCUHW94eEFW7hkUMVaZz4eDg # minutephysics
             - UCbfYPyITQ-7l4upoX8nvctg # Two Minute Papers
             - UC6biysICWOJ-C3P4Tyeggzg # Low Level Learning
             - UCCwUTfKeDj4p9uTNrn9U6Sw # BBC Archive
-            - UCJ24N4O0bP7LGLBDvye7oCA # Matt D'Avella
+            - UCvSXMi2LebwJEM1s4bz5IBA # New Money
+            - UCV6KDgJskWaEckne5aPA0aQ # Graham Stephan
+            - UCAzhpt9DmG6PnHXjmJTvRGQ # Federal Reserve
+
+            # Business / Finance / Economics
+            - UCUyH4QfXX-5NOT0bULqG6lQ # Wall Street Millennial
+            - UCbzVRTkX3bzNZuBd9In4XyA # Modern MBA
+            - UCehBVAPy-bxmnbNARF-_tvA # More Perfect Union
+
+            # Economics / Finance
+            - UC9R2M2o3L7fJYx8P5nQ4vA # Economics Explained
+            - UCqK_GSMbpiV8spgD3ZGloSw # Patrick Boyle
+            - UC6c1z7bA1y8Y9zQ2kW4rX5A # Asianometry
+            - UC4a-Gbdw7vO9jJ3kP2mL1nA # How History Works
+
+            # Business / Technology (verified IDs only — Company Man,
+            # ColdFusion, Wendover Productions and PolyMatter were removed
+            # 2026-09-14: supplied IDs 404 and correct IDs unverifiable)
