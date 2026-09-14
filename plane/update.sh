@@ -9,7 +9,9 @@
 # Flow:
 # 1. If already on the latest stable tag -> just ensure running + wait.
 # 2. Else pipe "y" into setup.sh upgrade, re-apply the 127.0.0.1 proxy
-#    bind (upgrade re-downloads compose), ensure the minio retag.
+#    bind AND the shared cloudlab-proxy network attachment (upgrade
+#    re-downloads compose, dropping both local patches), ensure the minio
+#    retag.
 # 3. Start (pulls missing images, runs migrations) and wait for 200.
 set -euo pipefail
 
@@ -51,6 +53,31 @@ EOF
     echo "==> Providing minio image from Quay"
     docker pull quay.io/minio/minio:latest
     docker tag quay.io/minio/minio:latest minio/minio:latest
+  fi
+
+  # Re-attach the proxy service to the shared cloudlab-proxy network
+  # (mirrors run.sh — upgrade re-downloaded compose without it, and
+  # without this Caddy cannot reach Plane as `plane:80`).
+  if ! grep -q "cloudlab-proxy" plane-app/docker-compose.yaml; then
+    echo "==> Attaching Plane proxy to cloudlab-proxy network (DNS: plane)"
+    python3 - plane-app/docker-compose.yaml <<'EOF'
+import sys
+p = sys.argv[1]
+text = open(p).read()
+anchor = "      - live\n"
+assert anchor in text, "proxy depends_on tail not found, update patch"
+block = (
+    "      - live\n"
+    "    networks:\n"
+    "      default:\n"
+    "      proxy:\n"
+    "        aliases:\n"
+    "          - plane\n"
+)
+text = text.replace(anchor, block, 1)
+text = text.rstrip("\n") + "\n\nnetworks:\n  proxy:\n    name: cloudlab-proxy\n    external: true\n"
+open(p, "w").write(text)
+EOF
   fi
 fi
 

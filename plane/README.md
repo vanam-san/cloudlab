@@ -42,8 +42,9 @@ Open the printed URL and create the admin account on first visit.
 
 If already on the latest stable tag it just ensures Plane is running.
 Otherwise it runs upstream `./setup.sh upgrade` (refreshes compose + env,
-preserving our ports/URLs), re-applies the localhost bind, refreshes the
-minio retag, restarts, and waits until healthy.
+preserving our ports/URLs), re-applies the localhost bind and the shared
+`cloudlab-proxy` network attachment (so Caddy keeps reaching Plane),
+refreshes the minio retag, restarts, and waits until healthy.
 
 ## Production domain
 
