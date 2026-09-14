@@ -1,0 +1,46 @@
+# Caddy reverse proxy for this VPS.
+# Backend apps run in sibling compose projects on host ports,
+# reachable here as host.docker.internal:<port>.
+#
+# To expose a site: point its DNS at this server, uncomment a block
+# below with your domain, then run:
+#   docker compose exec caddy caddy reload
+
+{
+	# Uncomment for Let's Encrypt expiry notices:
+	# email you@example.com
+}
+
+# Umami analytics (localhost:3000)
+# analytics.example.com {
+# 	reverse_proxy host.docker.internal:3000
+# }
+
+# Beszel monitoring (localhost:8090)
+# monitor.example.com {
+# 	reverse_proxy host.docker.internal:8090
+# }
+
+# Sure (localhost:3001)
+# sure.example.com {
+# 	reverse_proxy host.docker.internal:3001
+# }
+
+# Glance dashboard (localhost:8080)
+# glance.example.com {
+# 	reverse_proxy host.docker.internal:8080
+# }
+
+# Plane project management (localhost:8088)
+# Headers below are required by Plane behind a proxy (per upstream docs:
+# developers.plane.so/self-hosting/govern/reverse-proxy). Caddy handles
+# the :80→:443 redirect and TLS automatically.
+# plane.example.com {
+# 	reverse_proxy host.docker.internal:8088 {
+# 		header_up X-Forwarded-Proto {scheme}
+# 		header_up X-Forwarded-Host {host}
+# 		header_up X-Real-IP {remote_host}
+# 		header_up X-Forwarded-For {remote_host}
+# 		header_up Host {http.request.host}
+# 	}
+# }

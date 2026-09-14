@@ -1,0 +1,73 @@
+# Beszel - lightweight server monitoring (hub + optional local agent)
+# Images: henrygd/beszel:latest, henrygd/beszel-agent:latest
+# Docs: https://beszel.dev/guide/hub-installation
+#
+# Setup notes:
+# - Single compose file (an earlier separate docker-compose.yml with the
+#   same content was merged into this file to avoid duplicate-config
+#   warnings from `docker compose`).
+# - The `beszel-agent` service is behind the `agent` profile, so a plain
+#   `./run.sh` starts the hub only. run.sh enables the profile
+#   automatically once AGENT_TOKEN/AGENT_KEY are set in .env (see the
+#   README agent section for where those come from).
+# - Hub and agent talk over a shared unix socket (named volume
+#   `beszel-socket`), so no agent ports are published and no host
+#   networking tricks are needed for the hub side.
+# - Hub healthcheck uses the binary's built-in probe (`/beszel health`)
+#   in exec form because this image has no shell/wget. 127.0.0.1 is used
+#   explicitly to avoid IPv6 `localhost` resolution pitfalls.
+# - The hub port is bound to 127.0.0.1 only. In production the service
+#   gets a domain via the Caddy reverse proxy (see ../caddy) and is
+#   never exposed directly to the network.
+# - APP_URL must be the URL used to reach the hub: keep the localhost
+#   default for local use, set it to the production domain later
+#   (required for agent callbacks and alerts).
+services:
+  beszel:
+    image: ${BESZEL_IMAGE:-henrygd/beszel:latest}
+    container_name: beszel
+    restart: unless-stopped
+    ports:
+      # Localhost-only; public access goes through Caddy in production.
+      - "127.0.0.1:${BESZEL_PORT:-8090}:8090"
+    volumes:
+      # Named volumes (instead of ./beszel_data / ./beszel_socket bind
+      # mounts) so the repo stays clean and data survives updates.
+      - beszel-data:/beszel_data
+      - beszel-socket:/beszel_socket
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:${BESZEL_PORT:-8090}}
+    healthcheck:
+      test: ["CMD", "/beszel", "health", "--url", "http://127.0.0.1:8090"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  beszel-agent:
+    image: ${BESZEL_AGENT_IMAGE:-henrygd/beszel-agent:latest}
+    container_name: beszel-agent
+    restart: unless-stopped
+    # Only started with `docker compose --profile agent up -d`
+    # (run.sh does this automatically once tokens are set in .env).
+    profiles:
+      - agent
+    network_mode: host
+    volumes:
+      - beszel-socket:/beszel_socket
+      - beszel-agent-data:/var/lib/beszel-agent
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      LISTEN: /beszel_socket/beszel.sock
+      HUB_URL: http://localhost:8090
+      TOKEN: ${AGENT_TOKEN:-}
+      KEY: ${AGENT_KEY:-}
+    # Upstream ships this commented out; enable once the agent is paired.
+    # healthcheck:
+    #   test: ["CMD", "/agent", "health"]
+    #   interval: 120s
+
+volumes:
+  beszel-data:
+  beszel-socket:
+  beszel-agent-data:

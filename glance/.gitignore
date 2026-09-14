@@ -1,0 +1,7 @@
+# Secrets - never commit to GitHub
+.env
+.env.*
+!.env.example
+
+# Runtime data (config/ is committed on purpose - it IS the dashboard)
+*.log

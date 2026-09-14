@@ -1,0 +1,27 @@
+# Videos page: curated tech/science YouTube channels.
+# Every channel ID below was verified via its YouTube RSS feed title.
+# Deliberately excluded: dead IDs (Christian Lumba, Wall Street Millennial,
+# Modern MBA all 404), Neso Academy, and UCoOae5nYA7VqaXzerajD0lg which
+# resolves to Ali Abdaal, not Gamers Nexus.
+# Pulled into glance.yml via `$include`. Committed to git.
+- name: Videos
+  slug: videos
+  columns:
+    - size: full
+      widgets:
+        - type: videos
+          style: grid-cards
+          collapse-after-rows: 3
+          channels:
+            - UCYO_jab_esuFRV4b17AJtAw # 3Blue1Brown
+            - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
+            - UCsBjURrPoezykLs9EqgamOA # Fireship
+            - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
+            - UCXuqSBlHAE6Xw-yeJA0Tunw # Linus Tech Tips
+            - UCBJycsmduvYEL83R_U4JriQ # Marques Brownlee
+            - UC9-y-6csu5WGm29I7JiwpnA # Computerphile
+            - UCUHW94eEFW7hkUMVaZz4eDg # minutephysics
+            - UCbfYPyITQ-7l4upoX8nvctg # Two Minute Papers
+            - UC6biysICWOJ-C3P4Tyeggzg # Low Level Learning
+            - UCCwUTfKeDj4p9uTNrn9U6Sw # BBC Archive
+            - UCJ24N4O0bP7LGLBDvye7oCA # Matt D'Avella

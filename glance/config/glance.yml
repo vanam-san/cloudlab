@@ -1,0 +1,34 @@
+# Glance dashboard config. Committed to git - customize freely.
+# Full widget reference: https://github.com/glanceapp/glance/blob/main/docs/configuration.md
+# Page files (home.yml, ...) are pulled in via `$include` below.
+# After editing, apply with: docker compose restart glance
+
+server:
+  port: 8080
+  assets-path: /app/assets
+
+theme:
+  background-color: 240 21 15
+  contrast-multiplier: 1.2
+  primary-color: 217 92 83
+  positive-color: 115 54 76
+  negative-color: 347 70 65
+  # Custom CSS from ./assets/user.css (empty template file, committed).
+  # Note: browsers cache it; Ctrl+F5 after changing it.
+  custom-css-file: /assets/user.css
+
+pages:
+  # Startpage: search, service monitor, bookmarks (home.yml).
+  - $include: home.yml
+
+  # News/reading: RSS, Hacker News, Lobsters (articles.yml).
+  - $include: articles.yml
+
+  # Markets: indices, crypto, stocks, finance news (markets.yml).
+  - $include: markets.yml
+
+  # Gaming: top streams, subreddits, gaming YouTube (gaming.yml).
+  - $include: gaming.yml
+
+  # Videos: curated tech/science YouTube (videos.yml).
+  - $include: videos.yml
