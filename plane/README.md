@@ -23,12 +23,12 @@ That one command:
 
 1. Creates `.env` from `.env.example` (port/domain overrides, if missing)
 2. Runs `./setup.sh install` on first run (downloads compose + env as v1.4.2)
-3. Points `plane-app/plane.env` at localhost:8088 (+ CORS) and generates
+3. Points `plane-app/plane.env` at localhost:9080 (+ CORS) and generates
    `SECRET_KEY` / `LIVE_SERVER_SECRET_KEY`
 4. Binds Plane's proxy ports to 127.0.0.1
 5. Provides the minio image from Quay (`minio/minio` on Docker Hub is
    retired — without this, upstream's pull step fails)
-6. Starts everything and waits until http://localhost:8088 answers 200
+6. Starts everything and waits until http://localhost:9080 answers 200
 
 Open the printed URL and create the admin account on first visit.
 
@@ -52,7 +52,7 @@ the required proxy headers is already there, commented):
 
 ```caddyfile
 plane.example.com {
-	reverse_proxy host.docker.internal:8088 {
+	reverse_proxy plane:80 {
 		header_up X-Forwarded-Proto {scheme}
 		header_up X-Forwarded-Host {host}
 		...

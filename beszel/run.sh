@@ -26,6 +26,9 @@ set -a
 source "$ENV_FILE" 2>/dev/null || true
 set +a
 
+echo "==> Ensuring shared proxy network (cloudlab-proxy)"
+docker network inspect cloudlab-proxy >/dev/null 2>&1 || docker network create cloudlab-proxy
+
 echo "==> Pulling latest images (${BESZEL_IMAGE:-henrygd/beszel:latest})"
 docker compose pull
 

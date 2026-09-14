@@ -16,9 +16,13 @@
 # - Hub healthcheck uses the binary's built-in probe (`/beszel health`)
 #   in exec form because this image has no shell/wget. 127.0.0.1 is used
 #   explicitly to avoid IPv6 `localhost` resolution pitfalls.
-# - The hub port is bound to 127.0.0.1 only. In production the service
-#   gets a domain via the Caddy reverse proxy (see ../caddy) and is
-#   never exposed directly to the network.
+# - The hub port is bound to 127.0.0.1 only for direct local access.
+#   In production the service gets a domain via the Caddy reverse proxy
+#   (see ../caddy) over the shared `cloudlab-proxy` Docker network as
+#   `beszel:8090` — Caddy never uses the localhost port.
+#   Only the hub joins the proxy network; beszel-agent uses
+#   `network_mode: host` (incompatible with extra networks) and needs
+#   no proxying.
 # - APP_URL must be the URL used to reach the hub: keep the localhost
 #   default for local use, set it to the production domain later
 #   (required for agent callbacks and alerts).
@@ -43,6 +47,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    networks:
+      - default
+      - proxy
 
   beszel-agent:
     image: ${BESZEL_AGENT_IMAGE:-henrygd/beszel-agent:latest}
@@ -71,3 +78,8 @@ volumes:
   beszel-data:
   beszel-socket:
   beszel-agent-data:
+
+networks:
+  proxy:
+    name: cloudlab-proxy
+    external: true

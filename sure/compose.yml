@@ -14,8 +14,10 @@
 #
 # Local adaptations for this VPS (search for "LOCAL:"):
 # - The web port is bound to 127.0.0.1 only and defaults to 3001 (upstream
-#   default 3000 clashes with Umami on this host). In production the
-#   service gets a domain via the Caddy reverse proxy (see ../caddy).
+#   default 3000 clashes with Umami on this host) for direct local access.
+#   In production the service gets a domain via the Caddy reverse proxy
+#   (see ../caddy) over the shared `cloudlab-proxy` Docker network as
+#   `sure:3000` (container-internal port is always 3000).
 # - The image is parameterized via SURE_IMAGE so ./run.sh can pull/pin it.
 # - run.sh generates random POSTGRES_PASSWORD / SECRET_KEY_BASE on first
 #   run instead of using the publicly known example defaults.
@@ -95,11 +97,13 @@ x-rails-env: &rails_env
 services:
   web:
     image: ${SURE_IMAGE:-ghcr.io/we-promise/sure:stable}
+    container_name: sure-web
     volumes:
       - app-storage:/rails/storage
     ports:
-      # LOCAL: localhost-only; public access goes through Caddy in
-      # production. Default 3001 because 3000 is taken by Umami here.
+      # LOCAL: localhost-only for direct access; Caddy reaches this
+      # service over the shared proxy network as sure:3000 instead.
+      # Default 3001 because 3000 is taken by Umami here.
       - "127.0.0.1:${PORT:-3001}:3000"
       # To also publish on IPv6 (dual-stack), uncomment the line below AND
       # set BINDING=:: in the environment block. See docs/hosting/docker.md
@@ -118,7 +122,10 @@ services:
       - 8.8.8.8
       - 1.1.1.1
     networks:
-      - sure_net
+      sure_net:
+      proxy:
+        aliases:
+          - sure
 
   worker:
     image: ${SURE_IMAGE:-ghcr.io/we-promise/sure:stable}
@@ -209,3 +216,6 @@ volumes:
 networks:
   sure_net:
     driver: bridge
+  proxy:
+    name: cloudlab-proxy
+    external: true

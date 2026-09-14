@@ -10,6 +10,9 @@
 #    generates the two "change before deploying" secrets on first run.
 # 4. Binds Plane's proxy ports to 127.0.0.1 (localhost-only like every
 #    other service here; re-applied because upgrades re-download compose).
+# 4b. Attaches Plane's proxy to the shared `cloudlab-proxy` Docker network
+#    (as DNS name `plane`) so Caddy can reverse-proxy it without going
+#    through localhost ports; re-applied for the same reason.
 # 5. Provides the minio image from Quay (same version line as upstream).
 # 6. Starts via `./setup.sh start` (itself waits for DB migrations).
 # 7. Waits until the app answers 200 on localhost (first boot runs
@@ -32,11 +35,14 @@ fi
 # Load our overrides (defaults apply if keys are missing).
 # shellcheck disable=SC1091
 source "$ENV_FILE" 2>/dev/null || true
-PLANE_PORT="${PLANE_PORT:-8088}"
+PLANE_PORT="${PLANE_PORT:-9080}"
 PLANE_HTTPS_PORT="${PLANE_HTTPS_PORT:-9443}"
 PLANE_APP_DOMAIN="${PLANE_APP_DOMAIN:-localhost}"
 PLANE_WEB_URL="${PLANE_WEB_URL:-http://localhost:$PLANE_PORT}"
 PLANE_CORS_ORIGINS="${PLANE_CORS_ORIGINS:-http://localhost:$PLANE_PORT}"
+
+echo "==> Ensuring shared proxy network (cloudlab-proxy)"
+docker network inspect cloudlab-proxy >/dev/null 2>&1 || docker network create cloudlab-proxy
 
 if [[ ! -f "$SETUP" ]]; then
   echo "==> Downloading upstream setup.sh"
@@ -90,6 +96,33 @@ for l in open(p).read().split('\n'):
     if 'published: ${LISTEN_' in l and l.rstrip().endswith('}'):
         out.append(l[:len(l) - len(l.lstrip())] + 'host_ip: 127.0.0.1')
 open(p, 'w').write('\n'.join(out))
+EOF
+fi
+
+# --- shared proxy network for Caddy (re-applied after upgrades) ---
+# Attaches the `proxy` service to the external `cloudlab-proxy` network
+# with alias `plane`, so Caddy uses `reverse_proxy plane:80`.
+# Upstream's compose ends the `proxy` service with its depends_on list
+# just before the top-level `volumes:` block, so anchor there.
+if ! grep -q "cloudlab-proxy" "$COMPOSE"; then
+  echo "==> Attaching Plane proxy to cloudlab-proxy network (DNS: plane)"
+  python3 - "$COMPOSE" <<'EOF'
+import sys
+p = sys.argv[1]
+text = open(p).read()
+anchor = "      - live\n"
+assert anchor in text, "proxy depends_on tail not found, update patch"
+block = (
+    "      - live\n"
+    "    networks:\n"
+    "      default:\n"
+    "      proxy:\n"
+    "        aliases:\n"
+    "          - plane\n"
+)
+text = text.replace(anchor, block, 1)
+text = text.rstrip("\n") + "\n\nnetworks:\n  proxy:\n    name: cloudlab-proxy\n    external: true\n"
+open(p, "w").write(text)
 EOF
 fi
 

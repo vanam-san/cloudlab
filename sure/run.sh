@@ -23,6 +23,9 @@ fi
 # shellcheck disable=SC1091
 source "$ENV_FILE" 2>/dev/null || true
 
+echo "==> Ensuring shared proxy network (cloudlab-proxy)"
+docker network inspect cloudlab-proxy >/dev/null 2>&1 || docker network create cloudlab-proxy
+
 # Random hex secret; openssl preferred, /dev/urandom as fallback
 # (same two methods as upstream docs: docs/hosting/docker.md).
 gen_hex() {

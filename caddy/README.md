@@ -3,8 +3,11 @@
 [Caddy](https://caddyserver.com/docs/) reverse proxy with automatic HTTPS,
 using the official `caddy:latest` image, deployed with Docker Compose.
 
-Backend apps run in sibling compose projects (e.g. `../umami`) on host
-ports and are reachable from Caddy as `host.docker.internal:<port>`.
+Backend apps run in sibling compose projects (e.g. `../umami`) on the
+shared `cloudlab-proxy` Docker network and are reachable from Caddy via
+Docker DNS names (e.g. `umami:3000`, `beszel:8090`, `sure:3000`,
+`glance:8080`, `plane:80`). Localhost port bindings are kept for direct
+local access, but Caddy always uses the shared network.
 
 ## Quick start (one command)
 
@@ -27,7 +30,7 @@ Point the domain's DNS at this server, edit `Caddyfile`:
 
 ```caddyfile
 analytics.example.com {
-	reverse_proxy host.docker.internal:3000
+	reverse_proxy umami:3000
 }
 ```
 

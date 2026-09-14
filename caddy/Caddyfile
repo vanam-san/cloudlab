@@ -1,6 +1,7 @@
 # Caddy reverse proxy for this VPS.
-# Backend apps run in sibling compose projects on host ports,
-# reachable here as host.docker.internal:<port>.
+# Backend apps run in sibling compose projects on the shared
+# `cloudlab-proxy` Docker network, reachable here via Docker DNS names
+# (container-internal ports — not the localhost host ports).
 #
 # To expose a site: point its DNS at this server, uncomment a block
 # below with your domain, then run:
@@ -11,32 +12,34 @@
 	# email you@example.com
 }
 
-# Umami analytics (localhost:3000)
+# Umami analytics (container umami:3000)
 # analytics.example.com {
-# 	reverse_proxy host.docker.internal:3000
+# 	reverse_proxy umami:3000
 # }
 
-# Beszel monitoring (localhost:8090)
+# Beszel monitoring (container beszel:8090)
 # monitor.example.com {
-# 	reverse_proxy host.docker.internal:8090
+# 	reverse_proxy beszel:8090
 # }
 
-# Sure (localhost:3001)
+# Sure (container sure:3000 — internal port is always 3000,
+# even though the host maps localhost:3001 for direct access)
 # sure.example.com {
-# 	reverse_proxy host.docker.internal:3001
+# 	reverse_proxy sure:3000
 # }
 
-# Glance dashboard (localhost:8080)
+# Glance dashboard (container glance:8080)
 # glance.example.com {
-# 	reverse_proxy host.docker.internal:8080
+# 	reverse_proxy glance:8080
 # }
 
-# Plane project management (localhost:8088)
+# Plane project management (container plane:80 — Plane's built-in proxy
+# listens on :80 internally; localhost:9080 is only the host mapping)
 # Headers below are required by Plane behind a proxy (per upstream docs:
 # developers.plane.so/self-hosting/govern/reverse-proxy). Caddy handles
 # the :80→:443 redirect and TLS automatically.
 # plane.example.com {
-# 	reverse_proxy host.docker.internal:8088 {
+# 	reverse_proxy plane:80 {
 # 		header_up X-Forwarded-Proto {scheme}
 # 		header_up X-Forwarded-Host {host}
 # 		header_up X-Real-IP {remote_host}

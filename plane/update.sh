@@ -17,7 +17,7 @@ cd "$(dirname "$0")"
 
 # shellcheck disable=SC1091
 source .env 2>/dev/null || true
-PLANE_PORT="${PLANE_PORT:-8088}"
+PLANE_PORT="${PLANE_PORT:-9080}"
 
 echo "==> Resolving latest stable tag"
 LATEST="$(curl -fsSI https://github.com/makeplane/plane/releases/latest | grep -i '^location:' | grep -o 'tag/.*' | cut -d/ -f2 | tr -d '\r')"

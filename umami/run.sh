@@ -20,6 +20,9 @@ fi
 # shellcheck disable=SC1091
 source "$ENV_FILE" 2>/dev/null || true
 
+echo "==> Ensuring shared proxy network (cloudlab-proxy)"
+docker network inspect cloudlab-proxy >/dev/null 2>&1 || docker network create cloudlab-proxy
+
 if grep -q '^APP_SECRET=change-me\|^APP_SECRET=$' "$ENV_FILE" || ! grep -q '^APP_SECRET=.' "$ENV_FILE"; then
   if command -v openssl >/dev/null 2>&1; then
     SECRET="$(openssl rand -hex 32)"

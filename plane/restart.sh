@@ -13,7 +13,7 @@ echo "==> Restarting Plane"
 ./setup.sh restart
 
 echo "==> Waiting for Plane to become ready"
-URL="http://localhost:${PLANE_PORT:-8088}"
+URL="http://localhost:${PLANE_PORT:-9080}"
 for i in $(seq 1 120); do
   if curl -fsS -o /dev/null "$URL/" >/dev/null 2>&1; then
     break

@@ -5,12 +5,15 @@ clone it anywhere, run one command, get a working app.
 
 ## Architecture
 
-All backends listen on **localhost ports only**. [Caddy](caddy/) is the only
+All backends join the shared **`cloudlab-proxy` Docker network**. [Caddy](caddy/) is the only
 service exposed to the network (ports 80/443) and gives each app a production
-domain with automatic HTTPS when you're ready.
+domain with automatic HTTPS when you're ready. Localhost port bindings are
+kept for direct local access, but Caddy always proxies over the shared
+Docker network via container DNS names — never via host ports.
 
 ```
-internet ──▶ Caddy (:80/:443, auto-TLS) ──▶ host.docker.internal:PORT ──▶ app (127.0.0.1:PORT)
+internet ──▶ Caddy (:80/:443, auto-TLS) ──▶ app-name:internal-port ──▶ app (cloudlab-proxy network)
+                                     └──▶ 127.0.0.1:PORT (direct local access, bypasses Caddy)
 ```
 
 ## Services
@@ -22,7 +25,7 @@ internet ──▶ Caddy (:80/:443, auto-TLS) ──▶ host.docker.internal:POR
 | [glance/](glance/) | Dashboard | http://localhost:8080 | `glance.example.com` | running |
 | [sure/](sure/) | Finance manager | http://localhost:3001 | `sure.example.com` | running |
 | [caddy/](caddy/) | Reverse proxy | — (ports 80/443) | — | running |
-| [plane/](plane/) | Project management | http://localhost:8088 | `plane.example.com` | not started yet |
+| [plane/](plane/) | Project management | http://localhost:9080 | `plane.example.com` | not started yet |
 
 ## Requirements
 

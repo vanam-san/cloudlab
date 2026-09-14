@@ -9,9 +9,10 @@
 # - No container healthcheck: the image is a minimal single binary with no
 #   shell/probe tools and no status endpoint; ./run.sh polls `/` over HTTP
 #   until it returns 200 instead.
-# - The app port is bound to 127.0.0.1 only. In production the service
-#   gets a domain via the Caddy reverse proxy (see ../caddy) and is
-#   never exposed directly to the network.
+# - The app port is bound to 127.0.0.1 only for direct local access.
+#   In production the service gets a domain via the Caddy reverse proxy
+#   (see ../caddy) over the shared `cloudlab-proxy` Docker network as
+#   `glance:8080` — Caddy never uses the localhost port.
 services:
   glance:
     image: ${GLANCE_IMAGE:-glanceapp/glance:latest}
@@ -30,7 +31,17 @@ services:
     # Makes .env variables (e.g. MY_SECRET_TOKEN) available for use
     # inside the dashboard YAML files as ${...}.
     env_file: .env
+    networks:
+      - default
+      - proxy
     # Lets the server-side `monitor` widget reach sibling compose projects
-    # on their localhost ports via host.docker.internal.
+    # either via Docker DNS over the shared `cloudlab-proxy` network
+    # (e.g. http://umami:3000, http://beszel:8090) or, for localhost-port
+    # access, via host.docker.internal.
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+networks:
+  proxy:
+    name: cloudlab-proxy
+    external: true
