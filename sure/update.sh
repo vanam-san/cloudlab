@@ -3,7 +3,7 @@
 # Upstream docs: https://github.com/we-promise/sure/blob/main/docs/hosting/docker.md
 # ("How to update your app").
 # 1. Pulls the latest image from GHCR (tag from SURE_IMAGE in .env).
-# 2. Restarts web + worker WITHOUT touching db/redis (--no-deps), so the
+# 2. Restarts sure + worker WITHOUT touching db/redis (--no-deps), so the
 #    database is never interrupted. Rails migrations run on boot.
 # 3. Waits until the app answers on localhost again.
 set -euo pipefail
@@ -13,8 +13,8 @@ cd "$(dirname "$0")"
 echo "==> Pulling latest images"
 docker compose pull
 
-echo "==> Restarting web + worker (db/redis untouched)"
-docker compose up --no-deps -d web worker
+echo "==> Restarting sure + worker (db/redis untouched)"
+docker compose up --no-deps -d sure worker
 
 echo "==> Waiting for Sure to become ready"
 # shellcheck disable=SC1091

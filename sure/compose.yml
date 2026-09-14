@@ -13,15 +13,19 @@
 # to set the environment variables for extra security.
 #
 # Local adaptations for this VPS (search for "LOCAL:"):
-# - The web port is bound to 127.0.0.1 only and defaults to 3001 (upstream
+# - The app port is bound to 127.0.0.1 only and defaults to 3001 (upstream
 #   default 3000 clashes with Umami on this host) for direct local access.
 #   In production the service gets a domain via the Caddy reverse proxy
 #   (see ../caddy) over the shared `cloudlab-proxy` Docker network as
 #   `sure:3000` (container-internal port is always 3000).
+#   NOTE: the service is named `sure` (not `web`): generic service names are
+#   registered as DNS aliases on every attached network, and a `web` alias
+#   on the shared proxy network would collide with Plane's internal `web`
+#   service (Plane's proxy routes `/*` to `web:3000` and would land on Sure).
 # - The image is parameterized via SURE_IMAGE so ./run.sh can pull/pin it.
 # - run.sh generates random POSTGRES_PASSWORD / SECRET_KEY_BASE on first
 #   run instead of using the publicly known example defaults.
-# - No container healthcheck on `web` (upstream ships none and the image
+# - No container healthcheck on `sure` (upstream ships none and the image
 #   has no guaranteed probe tool); ./run.sh polls HTTP until ready.
 # - The `backup` profile needs upstream's ./bin/db-backup.sh, which is not
 #   included here; plain `./run.sh` never starts that profile.
@@ -95,7 +99,7 @@ x-rails-env: &rails_env
   ASSISTANT_MAX_TOOL_CALL_ITERATIONS: ${ASSISTANT_MAX_TOOL_CALL_ITERATIONS:-}
 
 services:
-  web:
+  sure:
     image: ${SURE_IMAGE:-ghcr.io/we-promise/sure:stable}
     container_name: sure-web
     volumes:

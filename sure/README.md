@@ -38,7 +38,7 @@ Per upstream docs
 ./update.sh
 ```
 
-It pulls the latest image and restarts web + worker without touching
+It pulls the latest image and restarts sure + worker without touching
 db/redis (`--no-deps`), then waits until the app responds again. Switch
 `SURE_IMAGE` between `:stable` (releases, default) and `:latest` (alpha)
 in `.env` to change which updates you receive.
@@ -49,7 +49,7 @@ In production Sure gets a domain via Caddy (see `../caddy`):
 
 ```caddyfile
 sure.example.com {
-	reverse_proxy host.docker.internal:3001
+	reverse_proxy sure:3000
 }
 ```
 
@@ -73,7 +73,7 @@ WEBAUTHN_ALLOWED_ORIGINS="https://sure.example.com"
 ```bash
 ./run.sh                         # first start / recreate everything
 ./update.sh                      # update app, db/redis untouched
-docker compose logs -f web worker
+docker compose logs -f sure worker
 docker compose down              # stop (keeps data)
 docker compose down -v           # stop + delete db/redis/app volumes
 ```
