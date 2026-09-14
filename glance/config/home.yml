@@ -27,17 +27,27 @@
         - type: monitor
           cache: 1m
           title: Services
+          # `url` is the link opened in YOUR browser (localhost via tunnel
+          # now, production domains later). `check-url` is what the Glance
+          # SERVER probes: it must be host.docker.internal, because from
+          # inside this container plain localhost means the container
+          # itself (and resolves to ::1 -> "connection refused").
           sites:
             - title: Umami
               url: http://localhost:3000
+              check-url: http://host.docker.internal:3000
             - title: Beszel
               url: http://localhost:8090
+              check-url: http://host.docker.internal:8090
             - title: Sure
               url: http://localhost:3001
+              check-url: http://host.docker.internal:3001
             - title: Plane
-              url: http://localhost:8088
+              url: http://localhost:9080
+              check-url: http://host.docker.internal:9080
             - title: Glance
               url: http://localhost:8080
+              check-url: http://host.docker.internal:8080
 
         - type: bookmarks
           groups:
@@ -68,7 +78,7 @@
                 - title: Sure
                   url: http://localhost:3001
                 - title: Plane
-                  url: http://localhost:8088
+                  url: http://localhost:9080
             - title: General
               links:
                 - title: Gmail
