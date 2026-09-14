@@ -43,6 +43,13 @@ docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter c
 Caddy obtains and renews the TLS certificate automatically. Certificates
 and config persist in the `caddy-data` / `caddy-config` Docker volumes.
 
+> **Naming rule:** the service you proxy must have a globally unique
+> compose service name — it becomes DNS on the shared `cloudlab-proxy`
+> network for every stack. Never use generic names (`web`, `api`, `db`);
+> Sure's `web` service once hijacked Plane's `web:3000` upstream (see the
+> note at the top of `Caddyfile`). Name it after the app (`sure`, not
+> `web`) and keep the Caddy upstream on the container-internal port.
+
 ## Updating
 
 Per upstream docs ([Install](https://caddyserver.com/docs/install),

@@ -3,6 +3,15 @@
 # `cloudlab-proxy` Docker network, reachable here via Docker DNS names
 # (container-internal ports — not the localhost host ports).
 #
+# NAMING RULE (learned the hard way, 2026-09): a compose service name is
+# registered as DNS on EVERY network it joins, across ALL stacks sharing
+# `cloudlab-proxy`. Keep every proxied service name globally unique and
+# never generic (`web`, `api`, `db`, ...). Sure's `web` service once
+# answered as `web` on the shared net, so Plane's proxy route `/*` to
+# `web:3000` served Sure's signup page instead of Plane — flipping with
+# container restart order, which is why it looked fine locally but broke
+# on the VPS. (Fix: Sure's service renamed `web` -> `sure`.)
+#
 # To expose a site: point its DNS at this server, uncomment a block
 # below with your domain, then run:
 #   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
