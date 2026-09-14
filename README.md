@@ -76,7 +76,7 @@ docker compose down -v       # stop AND delete data volumes
 
 ```bash
 cd caddy
-docker compose exec caddy caddy reload
+docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 ```
 
 Caddy obtains and renews certificates automatically. Some apps need to know

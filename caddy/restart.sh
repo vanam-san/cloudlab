@@ -2,7 +2,7 @@
 # Restart Caddy, then wait until the container reports healthy again.
 # Certificates, config and the Caddyfile are untouched (volumes + bind
 # mount), so there is no re-issuance. To apply Caddyfile edits WITHOUT a
-# restart, use `docker compose exec caddy caddy reload` instead.
+# restart, use `docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile` instead.
 set -euo pipefail
 
 cd "$(dirname "$0")"

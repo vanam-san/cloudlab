@@ -37,7 +37,7 @@ analytics.example.com {
 Then reload without downtime:
 
 ```bash
-docker compose exec caddy caddy reload
+docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 ```
 
 Caddy obtains and renews the TLS certificate automatically. Certificates
@@ -62,7 +62,7 @@ is no re-issuance and no downtime beyond the container restart.
 ./run.sh                                    # pull latest + (re)start
 ./update.sh                                 # update Caddy
 docker compose logs -f caddy
-docker compose exec caddy caddy reload      # apply Caddyfile changes
+docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile      # apply Caddyfile changes
 docker compose down        # stop (keeps certificates)
 docker compose down -v     # stop + delete certificates/config
 ```

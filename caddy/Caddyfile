@@ -5,7 +5,7 @@
 #
 # To expose a site: point its DNS at this server, uncomment a block
 # below with your domain, then run:
-#   docker compose exec caddy caddy reload
+#   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 
 {
 	# Uncomment for Let's Encrypt expiry notices:
