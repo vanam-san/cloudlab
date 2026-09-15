@@ -57,9 +57,14 @@ In production the hub gets a domain via Caddy (see `../caddy`):
 
 ```caddyfile
 monitor.example.com {
-	reverse_proxy host.docker.internal:8090
+	import tailscale-only
+	reverse_proxy beszel:8090
 }
 ```
+
+(Caddy reaches the hub over the shared `cloudlab-proxy` Docker network
+via the container DNS name `beszel:8090`. `import tailscale-only`
+restricts the site to tailnet clients; see `../caddy/Caddyfile`.)
 
 Then set `APP_URL=https://monitor.example.com` in `.env` and re-run
 `./run.sh` (required for agent callbacks and alert links).

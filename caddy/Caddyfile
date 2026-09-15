@@ -15,28 +15,47 @@
 # To expose a site: point its DNS at this server, uncomment a block
 # below with your domain, then run:
 #   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+#
+# TAILSCALE-ONLY SITES: every site except Glance imports `tailscale-only`,
+# which drops any client that is NOT on the tailnet. Glance stays public.
+# The `not path /.well-known/acme-challenge/*` line lets Let's Encrypt
+# HTTP-01 challenges through so certificates can still be issued/renewed.
+# To add/remove a device, edit the IP list in ONE place (the snippet below).
+
+(tailscale-only) {
+	@blocked {
+		not remote_ip 100.118.223.53 100.81.118.77 100.113.224.16 100.118.184.75 100.78.190.9 127.0.0.1/8
+		not path /.well-known/acme-challenge/*
+	}
+	handle @blocked {
+		respond "Forbidden — Tailscale only" 403
+	}
+}
 
 {
 	# Uncomment for Let's Encrypt expiry notices:
 	# email you@example.com
 }
 
-# Umami analytics (container umami:3000)
+# Umami analytics (container umami:3000) — Tailscale-only
 # analytics.example.com {
+# 	import tailscale-only
 # 	reverse_proxy umami:3000
 # }
 
-# Beszel monitoring (container beszel:8090)
+# Beszel monitoring (container beszel:8090) — Tailscale-only
 # monitor.example.com {
+# 	import tailscale-only
 # 	reverse_proxy beszel:8090
 # }
 
-# Actual Budget (container actual:5006)
+# Actual Budget (container actual:5006) — Tailscale-only
 # actual.example.com {
+# 	import tailscale-only
 # 	reverse_proxy actual:5006
 # }
 
-# Glance dashboard (container glance:8080)
+# Glance dashboard (container glance:8080) — PUBLIC, no import
 # glance.example.com {
 # 	reverse_proxy glance:8080
 # }
@@ -47,6 +66,7 @@
 # developers.plane.so/self-hosting/govern/reverse-proxy). Caddy handles
 # the :80→:443 redirect and TLS automatically.
 # plane.example.com {
+# 	import tailscale-only
 # 	reverse_proxy plane:80 {
 # 		header_up X-Forwarded-Proto {scheme}
 # 		header_up X-Forwarded-Host {host}
@@ -55,3 +75,16 @@
 # 		header_up Host {http.request.host}
 # 	}
 # }
+
+# DEFAULT-DENY (active): anything not matching a site above — direct-IP
+# probes, unknown SNI, scanners — gets its connection dropped instead of
+# a 404. Per-site `import tailscale-only` enforces tailnet access on
+# matched domains; this block covers everything else. Keep it last and
+# always active, even with zero sites configured.
+:80 {
+	abort
+}
+
+:443 {
+	abort
+}

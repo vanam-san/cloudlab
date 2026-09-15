@@ -34,12 +34,6 @@ services:
     networks:
       - default
       - proxy
-    # Lets the server-side `monitor` widget reach sibling compose projects
-    # either via Docker DNS over the shared `cloudlab-proxy` network
-    # (e.g. http://umami:3000, http://beszel:8090) or, for localhost-port
-    # access, via host.docker.internal.
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
 networks:
   proxy:

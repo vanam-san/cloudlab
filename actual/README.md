@@ -52,9 +52,13 @@ Upstream documents this exact setup
 
 ```caddyfile
 actual.example.com {
+	import tailscale-only
 	reverse_proxy actual:5006
 }
 ```
+
+(`import tailscale-only` restricts the site to tailnet clients; see
+`../caddy/Caddyfile`. Glance is the only site without it.)
 
 No extra app config is needed — Caddy terminates HTTPS automatically.
 

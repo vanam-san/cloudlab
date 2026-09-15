@@ -106,9 +106,12 @@ It is deployed behind Caddy for HTTPS rather than hitting
 
 ```caddyfile
 analytics.example.com {
-  reverse_proxy host.docker.internal:3000
+	import tailscale-only
+	reverse_proxy umami:3000
 }
 ```
 
-(`host.docker.internal` because Caddy runs in its own container; plain
-`localhost` inside the Caddyfile would mean the Caddy container itself.)
+(Caddy reaches Umami over the shared `cloudlab-proxy` Docker network via
+the container DNS name `umami:3000` — plain `localhost` inside the
+Caddyfile would mean the Caddy container itself. `import tailscale-only`
+restricts the site to tailnet clients; see `../caddy/Caddyfile`.)

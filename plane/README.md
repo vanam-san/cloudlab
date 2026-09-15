@@ -53,6 +53,7 @@ the required proxy headers is already there, commented):
 
 ```caddyfile
 plane.example.com {
+	import tailscale-only
 	reverse_proxy plane:80 {
 		header_up X-Forwarded-Proto {scheme}
 		header_up X-Forwarded-Host {host}

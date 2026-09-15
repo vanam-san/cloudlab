@@ -38,11 +38,12 @@ config in `./config` is a bind mount and is untouched by the update.
 
 ## Production domain
 
-In production Glance gets a domain via Caddy (see `../caddy`):
+In production Glance gets a domain via Caddy (see `../caddy`). Glance is
+intentionally public — it does NOT import `tailscale-only`:
 
 ```caddyfile
 glance.example.com {
-	reverse_proxy host.docker.internal:8080
+	reverse_proxy glance:8080
 }
 ```
 
