@@ -1,19 +1,7 @@
-# Gaming page: top streams, gaming subreddits, gaming YouTube.
+# Gaming page: gaming subreddits, gaming YouTube.
 # Pulled into glance.yml via `$include`. Committed to git.
 - name: Gaming
   columns:
-    - size: small
-      widgets:
-        - type: twitch-top-games
-          limit: 20
-          collapse-after: 13
-          exclude:
-            - just-chatting
-            - pools-hot-tubs-and-beaches
-            - music
-            - art
-            - asmr
-
     - size: full
       widgets:
         - type: group
@@ -27,6 +15,7 @@
         - type: videos
           style: grid-cards
           collapse-after-rows: 3
+          cache: 1h
           channels:
             - UCNvzD7Z-g64bPXxGzaQaa4g # gameranx
             - UCZ7AeeVbyslLM_8-nVy2B8Q # Skill Up

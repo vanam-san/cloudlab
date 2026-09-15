@@ -12,6 +12,7 @@
         - type: videos
           style: grid-cards
           collapse-after-rows: 3
+          cache: 1h
           channels:
             - UCYO_jab_esuFRV4b17AJtAw # 3Blue1Brown
             - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
