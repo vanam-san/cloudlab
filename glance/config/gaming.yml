@@ -1,4 +1,4 @@
-# Gaming page: gaming subreddits, gaming YouTube.
+# Gaming page: gaming subreddits.
 # Pulled into glance.yml via `$include`. Committed to git.
 - name: Gaming
   columns:
@@ -11,20 +11,5 @@
               subreddit: pcgaming
             - type: reddit
               subreddit: games
-
-        - type: videos
-          style: grid-cards
-          collapse-after-rows: 3
-          cache: 1h
-          channels:
-            - UCNvzD7Z-g64bPXxGzaQaa4g # gameranx
-            - UCZ7AeeVbyslLM_8-nVy2B8Q # Skill Up
-            - UCHDxYLv8iovIbhrfl16CNyg # GameLinked
-            - UC9PBzalIcEQCsiIkq36PyUA # Digital Foundry
-
-    - size: small
-      widgets:
-        - type: reddit
-          subreddit: gamingnews
-          limit: 7
-          style: vertical-cards
+            - type: reddit
+              subreddit: gamingnews
