@@ -23,7 +23,7 @@ internet ──▶ Caddy (:80/:443, auto-TLS) ──▶ app-name:internal-port �
 | [umami/](umami/) | Web analytics | http://localhost:3000 | `analytics.example.com` | running |
 | [beszel/](beszel/) | Server monitoring (hub + agent) | http://localhost:8090 | `monitor.example.com` | running, VPS paired |
 | [glance/](glance/) | Dashboard | http://localhost:8080 | `glance.example.com` | running |
-| [sure/](sure/) | Finance manager | http://localhost:3001 | `sure.example.com` | running |
+| [actual/](actual/) | Finance manager | http://localhost:5006 | `actual.example.com` | running |
 | [caddy/](caddy/) | Reverse proxy | — (ports 80/443) | — | running |
 | [plane/](plane/) | Project management | http://localhost:9080 | `plane.example.com` | not started yet |
 
@@ -81,8 +81,7 @@ docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter c
 
 Caddy obtains and renews certificates automatically. Some apps need to know
 their public URL — each service README has a "Production domain" section
-(e.g. Sure needs `RAILS_ASSUME_SSL=true`, Beszel needs `APP_URL`, Plane needs
-`WEB_URL`/`CORS_ALLOWED_ORIGINS`).
+(e.g. Plane needs `WEB_URL`/`CORS_ALLOWED_ORIGINS`, Beszel needs `APP_URL`).
 
 ## Secrets
 
@@ -99,7 +98,7 @@ app-specific backup tools are documented per service:
 
 - Umami: `umami-db` volume (plus an `ANALYZE;` tip after major upgrades).
 - Beszel: `beszel-data` volume; pairing survives updates.
-- Sure: `postgres-data`, `redis-data`, `app-storage` volumes.
+- Actual: `actual-data` volume (`server-files/` + `user-files/` inside).
 - Plane: `plane-app/` dir + volumes; `./setup.sh backup` for full backups.
 - Caddy: `caddy-data` (certificates), `caddy-config`.
 - Glance: stateless; the config in `glance/config/` is the backup.
@@ -113,7 +112,7 @@ cloudlab/
 ├── umami/     # analytics
 ├── beszel/    # monitoring
 ├── glance/    # dashboard (config/ is the dashboard)
-├── sure/      # finance
+├── actual/    # finance
 └── plane/     # project management (upstream setup.sh based)
 ```
 

@@ -5,7 +5,7 @@ using the official `caddy:latest` image, deployed with Docker Compose.
 
 Backend apps run in sibling compose projects (e.g. `../umami`) on the
 shared `cloudlab-proxy` Docker network and are reachable from Caddy via
-Docker DNS names (e.g. `umami:3000`, `beszel:8090`, `sure:3000`,
+Docker DNS names (e.g. `umami:3000`, `beszel:8090`, `actual:5006`,
 `glance:8080`, `plane:80`). Localhost port bindings are kept for direct
 local access, but Caddy always uses the shared network.
 
@@ -46,9 +46,8 @@ and config persist in the `caddy-data` / `caddy-config` Docker volumes.
 > **Naming rule:** the service you proxy must have a globally unique
 > compose service name — it becomes DNS on the shared `cloudlab-proxy`
 > network for every stack. Never use generic names (`web`, `api`, `db`);
-> Sure's `web` service once hijacked Plane's `web:3000` upstream (see the
-> note at the top of `Caddyfile`). Name it after the app (`sure`, not
-> `web`) and keep the Caddy upstream on the container-internal port.
+> name it after the app (`actual`, not `web`) and keep the Caddy upstream
+> on the container-internal port.
 
 ## Updating
 

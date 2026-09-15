@@ -3,7 +3,7 @@
 # Docs: https://caddyserver.com/docs/
 #
 # Role: Caddy is the only service exposed to the network (ports 80/443).
-# All backend apps (umami, beszel, sure, glance, plane) join the shared
+# All backend apps (umami, beszel, actual, glance, plane) join the shared
 # `cloudlab-proxy` Docker network and get production domains here via
 # reverse_proxy blocks using Docker DNS names (e.g. `reverse_proxy umami:3000`).
 # Localhost port bindings are kept for direct local access, but Caddy

@@ -39,9 +39,9 @@
             - title: Beszel
               url: http://localhost:8090
               check-url: http://host.docker.internal:8090
-            - title: Sure
-              url: http://localhost:3001
-              check-url: http://host.docker.internal:3001
+            - title: Actual
+              url: http://localhost:5006
+              check-url: http://host.docker.internal:5006
             - title: Plane
               url: http://localhost:9080
               check-url: http://host.docker.internal:9080
@@ -75,8 +75,8 @@
                   url: http://localhost:3000
                 - title: Beszel
                   url: http://localhost:8090
-                - title: Sure
-                  url: http://localhost:3001
+                - title: Actual
+                  url: http://localhost:5006
                 - title: Plane
                   url: http://localhost:9080
             - title: General

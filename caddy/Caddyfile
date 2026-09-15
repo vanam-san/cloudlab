@@ -6,11 +6,11 @@
 # NAMING RULE (learned the hard way, 2026-09): a compose service name is
 # registered as DNS on EVERY network it joins, across ALL stacks sharing
 # `cloudlab-proxy`. Keep every proxied service name globally unique and
-# never generic (`web`, `api`, `db`, ...). Sure's `web` service once
-# answered as `web` on the shared net, so Plane's proxy route `/*` to
-# `web:3000` served Sure's signup page instead of Plane — flipping with
-# container restart order, which is why it looked fine locally but broke
-# on the VPS. (Fix: Sure's service renamed `web` -> `sure`.)
+# never generic (`web`, `api`, `db`, ...). A generic `web` service once
+# answered on the shared net, so another app's proxy route `/*` to
+# `web:3000` served the wrong app — flipping with container restart
+# order, which is why it looked fine locally but broke on the VPS.
+# (Fix: name each service after its app, e.g. `actual`, not `web`.)
 #
 # To expose a site: point its DNS at this server, uncomment a block
 # below with your domain, then run:
@@ -31,10 +31,9 @@
 # 	reverse_proxy beszel:8090
 # }
 
-# Sure (container sure:3000 — internal port is always 3000,
-# even though the host maps localhost:3001 for direct access)
-# sure.example.com {
-# 	reverse_proxy sure:3000
+# Actual Budget (container actual:5006)
+# actual.example.com {
+# 	reverse_proxy actual:5006
 # }
 
 # Glance dashboard (container glance:8080)

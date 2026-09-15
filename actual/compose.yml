@@ -1,0 +1,47 @@
+# Actual Budget - personal finance manager
+# Image: actualbudget/actual-server:latest
+# Docs: https://actualbudget.org/docs/install/docker
+# Reverse proxy: https://actualbudget.org/docs/config/reverse-proxies
+# Config options: https://actualbudget.org/docs/config/
+#
+# Setup notes (follows the upstream "Docker Compose" method):
+# - Single container: the server hosts both the API and the web UI on
+#   port 5006. Set your password in the UI on first run (no env secrets).
+# - Data persists in the named `actual-data` volume as /data
+#   (server-files/ + user-files/); upstream's bind mount (./actual-data)
+#   is replaced so data survives `git clone` redeploys like other stacks.
+# - The app port is bound to 127.0.0.1 only for direct local access.
+#   In production the service gets a domain via the Caddy reverse proxy
+#   (see ../caddy) over the shared `cloudlab-proxy` Docker network as
+#   `actual:5006` — Caddy never uses the localhost port.
+#   Upstream Caddy example: `reverse_proxy actual:5006`.
+# - Healthcheck is upstream's (`node scripts/health-check.js`).
+# - Service name `actual` is globally unique on the shared proxy network
+#   (never use generic names like `web`/`api` — see ../caddy/Caddyfile).
+services:
+  actual:
+    image: ${ACTUAL_IMAGE:-actualbudget/actual-server:latest}
+    container_name: actual
+    restart: unless-stopped
+    ports:
+      # Localhost-only; public access goes through Caddy in production.
+      - "127.0.0.1:${ACTUAL_PORT:-5006}:5006"
+    volumes:
+      - actual-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node scripts/health-check.js"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - default
+      - proxy
+
+volumes:
+  actual-data:
+
+networks:
+  proxy:
+    name: cloudlab-proxy
+    external: true
