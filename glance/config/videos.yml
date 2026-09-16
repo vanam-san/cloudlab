@@ -1,0 +1,40 @@
+# Videos page: curated tech/science YouTube channels.
+# Every channel ID below was verified via its YouTube RSS feed title.
+# Deliberately excluded: dead IDs (Christian Lumba, Wall Street Millennial,
+# Modern MBA all 404), Neso Academy, and UCoOae5nYA7VqaXzerajD0lg which
+# resolves to Ali Abdaal, not Gamers Nexus.
+# Pulled into glance.yml via `$include`. Committed to git.
+- name: Videos
+  slug: videos
+  columns:
+    - size: full
+      widgets:
+        - type: videos
+          style: grid-cards
+          collapse-after-rows: 3
+          cache: 1h
+          channels:
+            - UCYO_jab_esuFRV4b17AJtAw # 3Blue1Brown
+            - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
+            - UC9-y-6csu5WGm29I7JiwpnA # Computerphile
+            - UCUHW94eEFW7hkUMVaZz4eDg # minutephysics
+            - UCbfYPyITQ-7l4upoX8nvctg # Two Minute Papers
+            - UC6biysICWOJ-C3P4Tyeggzg # Low Level Learning
+            - UCCwUTfKeDj4p9uTNrn9U6Sw # BBC Archive
+
+            # Business / Finance / Economics
+            - UCUyH4QfXX-5NOT0bULqG6lQ # Wall Street Millennial
+            - UCbzVRTkX3bzNZuBd9In4XyA # Modern MBA
+            - UCehBVAPy-bxmnbNARF-_tvA # More Perfect Union
+
+            # Economics / Finance
+            - UC9R2M2o3L7fJYx8P5nQ4vA # Economics Explained
+            - UCqK_GSMbpiV8spgD3ZGloSw # Patrick Boyle
+            - UC6c1z7bA1y8Y9zQ2kW4rX5A # Asianometry
+            - UC4a-Gbdw7vO9jJ3kP2mL1nA # How History Works
+
+            # Business / Technology (IDs verified 2026-09-15 via
+            # channel page titles)
+            - UC4QZ_LsYcvcq7qOsOhpAX4A # ColdFusion
+            - UC9RM-iSvTu1uPJb8X5yp3EQ # Wendover Productions
+            - UCgNg3vwj3xt7QOrcIDaHdFg # PolyMatter

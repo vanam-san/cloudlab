@@ -1,0 +1,112 @@
+# Home page: startpage with search, service monitor and bookmarks.
+# Layout: clock + Mumbai weather on the left, services/bookmarks in the
+# middle, calendar on the right (full-width page, no slim constraint).
+# The monitor widget checks sites SERVER-SIDE (from inside the Glance
+# container), so sibling services use Docker DNS names over the shared
+# `cloudlab-proxy` network (e.g. http://umami:3000) — plain localhost
+# would mean the container itself (and resolves to ::1 -> "connection
+# refused"). Bookmarks are client-side (browser) links, so they stay
+# localhost.
+# Pulled into glance.yml via `$include`. Committed to git.
+- name: Startpage
+  hide-desktop-navigation: true
+  columns:
+    - size: small
+      widgets:
+        - type: clock
+          hour-format: 24h
+
+        - type: weather
+          location: Mumbai, India
+          units: metric
+          hour-format: 24h
+
+    - size: full
+      widgets:
+        - type: search
+          autofocus: true
+
+        - type: monitor
+          cache: 1m
+          title: Services
+          # `url` is the link opened in YOUR browser (localhost via tunnel
+          # now, production domains later). `check-url` is what the Glance
+          # SERVER probes over the shared `cloudlab-proxy` Docker network
+          # via container DNS names (Plane's internal proxy listens on
+          # :80 internally; :9080 is only its localhost host mapping).
+          sites:
+            - title: Umami
+              url: http://localhost:3000
+              check-url: http://umami:3000
+            - title: Beszel
+              url: http://localhost:8090
+              check-url: http://beszel:8090
+            - title: Sure
+              url: http://localhost:3001
+              check-url: http://sure:3000
+            - title: Plane
+              url: http://localhost:9080
+              check-url: http://plane:80
+            - title: Glance
+              url: http://localhost:8080
+              check-url: http://glance:8080
+
+        - type: bookmarks
+          groups:
+            # Page links are relative on purpose: they resolve against
+            # whatever address Glance is served from — localhost:8080 now,
+            # the reverse-proxied domain (via Caddy) in production.
+            - title: Pages
+              same-tab: true
+              links:
+                - title: Articles
+                  url: /articles
+                - title: Markets
+                  url: /markets
+                - title: Gaming
+                  url: /gaming
+                - title: Videos
+                  url: /videos
+            # Browser-side links: localhost while developing. Swap these
+            # for the production domains once Caddy serves them. (The
+            # monitor widget above is server-side and keeps working via
+            # Docker DNS regardless.)
+            - title: Homelab
+              links:
+                - title: Umami
+                  url: http://localhost:3000
+                - title: Beszel
+                  url: http://localhost:8090
+                - title: Sure
+                  url: http://localhost:3001
+                - title: Plane
+                  url: http://localhost:9080
+            - title: General
+              links:
+                - title: Gmail
+                  url: https://mail.google.com/mail/u/0/
+                - title: Amazon
+                  url: https://www.amazon.com/
+                - title: Github
+                  url: https://github.com/
+            - title: Entertainment
+              links:
+                - title: YouTube
+                  url: https://www.youtube.com/
+                - title: Prime Video
+                  url: https://www.primevideo.com/
+                - title: Disney+
+                  url: https://www.disneyplus.com/
+            - title: Social
+              links:
+                - title: Reddit
+                  url: https://www.reddit.com/
+                - title: Twitter
+                  url: https://twitter.com/
+                - title: Instagram
+                  url: https://www.instagram.com/
+
+    - size: small
+      widgets:
+        - type: calendar
+          first-day-of-week: monday

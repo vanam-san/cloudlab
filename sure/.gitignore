@@ -1,0 +1,8 @@
+# Secrets - never commit to GitHub
+.env
+.env.*
+!.env.example
+
+# Runtime data
+data/
+*.log

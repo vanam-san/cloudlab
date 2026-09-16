@@ -1,0 +1,49 @@
+# Caddy - automatic HTTPS reverse proxy
+# Image: caddy:latest
+# Docs: https://caddyserver.com/docs/
+#
+# Role: Caddy is the only service exposed to the network (ports 80/443).
+# All backend apps (umami, beszel, sure, glance, plane) join the shared
+# `cloudlab-proxy` Docker network and get production domains here via
+# reverse_proxy blocks using Docker DNS names (e.g. `reverse_proxy umami:3000`).
+# Localhost port bindings are kept for direct local access, but Caddy
+# never uses them — it talks to containers over the shared network.
+#
+# Setup notes:
+# - Healthcheck queries the admin API (127.0.0.1:2019/config) instead of
+#   port 80: with no sites configured Caddy answers 404 on :80, while the
+#   admin endpoint always returns 200 while Caddy is running.
+# - The `proxy` network is external (created by ./run.sh via
+#   `docker network create cloudlab-proxy`) so `docker compose down`
+#   never deletes it out from under the other stacks.
+
+services:
+  caddy:
+    image: ${CADDY_IMAGE:-caddy:latest}
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - proxy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:2019/config/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  caddy-data:
+  caddy-config:
+
+networks:
+  proxy:
+    name: cloudlab-proxy
+    external: true

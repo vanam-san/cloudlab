@@ -1,0 +1,65 @@
+# Articles page: blogs/RSS next to Hacker News next to Lobsters,
+# with a Reddit row below them all.
+# Pulled into glance.yml via `$include`. Committed to git.
+- name: Articles
+  slug: articles
+  columns:
+    - size: full
+      widgets:
+        - type: group
+          widgets:
+            - type: rss
+              title: Blogs
+              limit: 10
+              collapse-after: 5
+              cache: 3h
+              feeds:
+                - url: https://vanam.dev/rss.xml
+                  title: Vanam Dev
+                - url: https://jarmos.dev/rss.xml
+                  title: Jarmos
+
+            - type: hacker-news
+              limit: 15
+              collapse-after: 8
+
+            - type: lobsters
+              sort-by: hot
+              tags:
+                - go
+                - rust
+                - c
+                - linux
+                - android
+                - security
+                - devops
+                - scaling
+                - performance
+                - compilers
+                - vim
+                - databases
+                - zig
+              limit: 15
+              collapse-after: 8
+
+        - type: group
+          widgets:
+            - type: reddit
+              subreddit: technology
+              limit: 10
+              collapse-after: 5
+
+            - type: reddit
+              subreddit: sysadmin
+              limit: 10
+              collapse-after: 5
+
+            - type: reddit
+              subreddit: linux
+              limit: 10
+              collapse-after: 5
+
+            - type: reddit
+              subreddit: developersindia
+              limit: 10
+              collapse-after: 5

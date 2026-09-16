@@ -1,0 +1,78 @@
+# Markets page: indices, crypto, stocks, finance news, videos.
+# Pulled into glance.yml via `$include`. Committed to git.
+- name: Markets
+  columns:
+    - size: small
+      widgets:
+        - type: markets
+          title: Indices
+          markets:
+            - symbol: ^NSEI
+              name: NIFTY 50
+            - symbol: ^BSESN
+              name: SENSEX
+            - symbol: ^NSEBANK
+              name: NIFTY Bank
+            - symbol: ^CNXIT
+              name: NIFTY IT
+            - symbol: ^CNXPHARMA
+              name: NIFTY Pharma
+            - symbol: ^CNXAUTO
+              name: NIFTY Auto
+            - symbol: ^CNXMETAL
+              name: NIFTY Metal
+            - symbol: ^CNXFMCG
+              name: NIFTY FMCG
+            - symbol: SPY
+              name: S&P 500
+            - symbol: DX-Y.NYB
+              name: Dollar Index
+
+    - size: full
+      widgets:
+        - type: rss
+          title: News
+          style: horizontal-cards
+          feeds:
+            - url: https://www.bloomberg.com/feeds/markets/news.rss
+              title: Bloomberg
+            - url: https://moxie.foxbusiness.com/google-publisher/markets.xml
+              title: Fox Business
+            - url: https://moxie.foxbusiness.com/google-publisher/technology.xml
+              title: Fox Business
+
+        - type: rss
+          title: News
+          limit: 30
+          collapse-after: 13
+          feeds:
+            - url: https://www.ft.com/technology?format=rss
+              title: Financial Times
+            - url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+              title: Wall Street Journal
+
+    - size: small
+      widgets:
+        - type: markets
+          title: Stocks
+          markets:
+            - symbol: NVDA
+              name: NVIDIA
+            - symbol: AAPL
+              name: Apple
+            - symbol: MSFT
+              name: Microsoft
+            - symbol: GOOGL
+              name: Google
+            - symbol: AMD
+              name: AMD
+            - symbol: RDDT
+              name: Reddit
+            - symbol: AMZN
+              name: Amazon
+            - symbol: TSLA
+              name: Tesla
+            - symbol: INTC
+              name: Intel
+            - symbol: META
+              name: Meta

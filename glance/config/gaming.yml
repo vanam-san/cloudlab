@@ -1,0 +1,15 @@
+# Gaming page: gaming subreddits.
+# Pulled into glance.yml via `$include`. Committed to git.
+- name: Gaming
+  columns:
+    - size: full
+      widgets:
+        - type: group
+          widgets:
+            - type: reddit
+              show-thumbnails: true
+              subreddit: pcgaming
+            - type: reddit
+              subreddit: games
+            - type: reddit
+              subreddit: gamingnews

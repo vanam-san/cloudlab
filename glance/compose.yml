@@ -1,0 +1,41 @@
+# Glance - self-hosted dashboard
+# Image: glanceapp/glance:latest
+# Docs: https://github.com/glanceapp/glance
+#
+# Setup notes (follows the upstream "Docker compose manual" method):
+# - Config lives in ./config/glance.yml (bind-mounted read-only) and IS
+#   committed to git — customizing the dashboard is the point of Glance.
+#   After editing it, restart the service: `docker compose restart glance`.
+# - No container healthcheck: the image is a minimal single binary with no
+#   shell/probe tools and no status endpoint; ./run.sh polls `/` over HTTP
+#   until it returns 200 instead.
+# - The app port is bound to 127.0.0.1 only for direct local access.
+#   In production the service gets a domain via the Caddy reverse proxy
+#   (see ../caddy) over the shared `cloudlab-proxy` Docker network as
+#   `glance:8080` — Caddy never uses the localhost port.
+services:
+  glance:
+    image: ${GLANCE_IMAGE:-glanceapp/glance:latest}
+    container_name: glance
+    restart: unless-stopped
+    ports:
+      # Localhost-only; public access goes through Caddy in production.
+      - "127.0.0.1:${GLANCE_PORT:-8080}:8080"
+    volumes:
+      # Read-only: Glance only reads its config, never writes to it.
+      - ./config:/app/config:ro
+      # Custom CSS / assets (./assets/user.css template file).
+      - ./assets:/app/assets:ro
+      # Correct timestamps in logs/widgets.
+      - /etc/localtime:/etc/localtime:ro
+    # Makes .env variables (e.g. MY_SECRET_TOKEN) available for use
+    # inside the dashboard YAML files as ${...}.
+    env_file: .env
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    name: cloudlab-proxy
+    external: true

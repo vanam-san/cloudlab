@@ -1,0 +1,67 @@
+# Umami - privacy-friendly web analytics
+# Image: docker.umami.is/umami-software/umami:latest
+# Docs: https://umami.is/docs
+#
+# Setup notes (fixes found while deploying):
+# - The prebuilt :latest image is app-only; Postgres runs as the `db`
+#   service below and migrations apply automatically on first startup.
+# - Healthcheck polls http://127.0.0.1:3000/ instead of
+#   http://localhost:3000/api/health because:
+#     * this image listens on IPv4 only, while inside the container
+#       `localhost` resolves to ::1 first -> "connection refused";
+#       127.0.0.1 avoids the IPv6 pitfall.
+#     * this build has no /api/health route (404); `/` returns 200 once
+#       the app is ready, so it doubles as the readiness probe.
+# - The app port is bound to 127.0.0.1 only for direct local access.
+#   In production the service gets a domain via the Caddy reverse proxy
+#   (see ../caddy) over the shared `cloudlab-proxy` Docker network as
+#   `umami:3000` — Caddy never uses the localhost port.
+
+services:
+  umami:
+    image: ${UMAMI_IMAGE:-docker.umami.is/umami-software/umami:latest}
+    container_name: umami
+    restart: unless-stopped
+    ports:
+      # Localhost-only; public access goes through Caddy in production.
+      - "127.0.0.1:${UMAMI_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-umami}:${POSTGRES_PASSWORD:-umami}@db:5432/${POSTGRES_DB:-umami}
+      APP_SECRET: ${APP_SECRET:?run ./run.sh to generate .env with a random APP_SECRET}
+      DISABLE_TELEMETRY: 1
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - default
+      - proxy
+
+  db:
+    image: postgres:16-alpine
+    container_name: umami-db
+    restart: unless-stopped
+    volumes:
+      - umami-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-umami}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-umami}
+      POSTGRES_DB: ${POSTGRES_DB:-umami}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-umami} -d ${POSTGRES_DB:-umami}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  umami-db:
+
+networks:
+  proxy:
+    name: cloudlab-proxy
+    external: true

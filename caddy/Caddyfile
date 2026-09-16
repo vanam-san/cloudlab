@@ -1,0 +1,92 @@
+# Caddy reverse proxy for this VPS.
+# Backend apps run in sibling compose projects on the shared
+# `cloudlab-proxy` Docker network, reachable here via Docker DNS names
+# (container-internal ports — not the localhost host ports).
+#
+# NAMING RULE (learned the hard way, 2026-09): a compose service name is
+# registered as DNS on EVERY network it joins, across ALL stacks sharing
+# `cloudlab-proxy`. Keep every proxied service name globally unique and
+# never generic (`web`, `api`, `db`, ...). A generic `web` service once
+# answered on the shared net, so another app's proxy route `/*` to
+# `web:3000` served the wrong app — flipping with container restart
+# order, which is why it looked fine locally but broke on the VPS.
+# (Fix: name each service after its app, e.g. `sure`, not `web`.)
+#
+# To expose a site: point its DNS at this server, uncomment a block
+# below with your domain, then run:
+#   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+#
+# TAILSCALE-ONLY SITES: every site imports `tailscale-only`,
+# which drops any client that is NOT on the tailnet.
+# The `not path /.well-known/acme-challenge/*` line lets Let's Encrypt
+# HTTP-01 challenges through so certificates can still be issued/renewed.
+# To add/remove a device, edit the IP list in ONE place (the snippet below).
+
+(tailscale-only) {
+	@blocked {
+		not remote_ip 100.118.223.53 100.81.118.77 100.113.224.16 100.118.184.75 100.78.190.9 127.0.0.1/8
+		not path /.well-known/acme-challenge/*
+	}
+	handle @blocked {
+		respond "Forbidden — Tailscale only" 403
+	}
+}
+
+{
+	# Uncomment for Let's Encrypt expiry notices:
+	# email you@example.com
+}
+
+# Umami analytics (container umami:3000) — Tailscale-only
+# analytics.example.com {
+# 	import tailscale-only
+# 	reverse_proxy umami:3000
+# }
+
+# Beszel monitoring (container beszel:8090) — Tailscale-only
+# monitor.example.com {
+# 	import tailscale-only
+# 	reverse_proxy beszel:8090
+# }
+
+# Sure (container sure:3000 — internal port is always 3000,
+# even though the host maps localhost:3001 for direct access) — Tailscale-only
+# sure.example.com {
+# 	import tailscale-only
+# 	reverse_proxy sure:3000
+# }
+
+# Glance dashboard (container glance:8080) — Tailscale-only
+# glance.example.com {
+# 	import tailscale-only
+# 	reverse_proxy glance:8080
+# }
+
+# Plane project management (container plane:80 — Plane's built-in proxy
+# listens on :80 internally; localhost:9080 is only the host mapping)
+# Headers below are required by Plane behind a proxy (per upstream docs:
+# developers.plane.so/self-hosting/govern/reverse-proxy). Caddy handles
+# the :80→:443 redirect and TLS automatically.
+# plane.example.com {
+# 	import tailscale-only
+# 	reverse_proxy plane:80 {
+# 		header_up X-Forwarded-Proto {scheme}
+# 		header_up X-Forwarded-Host {host}
+# 		header_up X-Real-IP {remote_host}
+# 		header_up X-Forwarded-For {remote_host}
+# 		header_up Host {http.request.host}
+# 	}
+# }
+
+# DEFAULT-DENY (active): anything not matching a site above — direct-IP
+# probes, unknown SNI, scanners — gets its connection dropped instead of
+# a 404. Per-site `import tailscale-only` enforces tailnet access on
+# matched domains; this block covers everything else. Keep it last and
+# always active, even with zero sites configured.
+:80 {
+	abort
+}
+
+:443 {
+	abort
+}
