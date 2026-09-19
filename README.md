@@ -25,7 +25,7 @@ internet ──▶ Caddy (:80/:443, auto-TLS) ──▶ app-name:internal-port �
 | [glance/](glance/) | Dashboard | http://localhost:8080 | `glance.example.com` | running |
 | [sure/](sure/) | Finance manager | http://localhost:3001 | `sure.example.com` | running |
 | [caddy/](caddy/) | Reverse proxy | — (ports 80/443) | — | running |
-| [plane/](plane/) | Project management | http://localhost:9080 | `plane.example.com` | not started yet |
+| [plane/](plane/) | Project management | http://localhost:9080 | `plane.example.com` | running |
 
 ## Requirements
 

@@ -26,8 +26,9 @@ services:
       - ./config:/app/config:ro
       # Custom CSS / assets (./assets/user.css template file).
       - ./assets:/app/assets:ro
-      # Correct timestamps in logs/widgets.
-      - /etc/localtime:/etc/localtime:ro
+      # NOTE: /etc/localtime bind removed — it breaks on Docker Desktop/WSL
+      # (symlink mount fails with "not a directory"). Host is already UTC,
+      # same as the container default, so timestamps are unaffected.
     # Makes .env variables (e.g. MY_SECRET_TOKEN) available for use
     # inside the dashboard YAML files as ${...}.
     env_file: .env
