@@ -16,6 +16,12 @@ if [[ ! -f "$ENV_FILE" ]]; then
   cp .env.example "$ENV_FILE"
 fi
 
+if [[ ! -f "tailscale-ips.caddy" ]]; then
+  echo "==> Creating tailscale-ips.caddy from tailscale-ips.caddy.example"
+  echo "    Edit it with your tailnet IPs before exposing any site."
+  cp tailscale-ips.caddy.example tailscale-ips.caddy
+fi
+
 # Load .env for the values read below. Defaults apply when keys are
 # missing (e.g. a .env created before those keys existed).
 # shellcheck disable=SC1091
@@ -28,7 +34,9 @@ echo "==> Pulling latest images (${CADDY_IMAGE:-caddy:latest})"
 docker compose pull
 
 echo "==> Validating Caddyfile"
+# Both files are mounted because Caddyfile does `import tailscale-ips.caddy`.
 docker run --rm -v ./Caddyfile:/etc/caddy/Caddyfile:ro \
+  -v ./tailscale-ips.caddy:/etc/caddy/tailscale-ips.caddy:ro \
   "${CADDY_IMAGE:-caddy:latest}" \
   caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile
 
@@ -51,6 +59,6 @@ done
 
 echo ""
 echo "Caddy is up!"
-echo "  HTTP:  http://<server-ip>/ (no sites configured yet)"
-echo "  Edit ./Caddyfile to add a site, then reload with:"
+echo "  No sites configured yet — the default-deny block drops direct-IP"
+echo "  connections (by design). Edit ./Caddyfile to add a site, then reload with:"
 echo "    docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile"

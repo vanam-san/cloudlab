@@ -66,7 +66,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       LISTEN: /beszel_socket/beszel.sock
-      HUB_URL: http://localhost:8090
+      # Follows BESZEL_PORT so a custom hub port doesn't break the agent.
+      HUB_URL: http://localhost:${BESZEL_PORT:-8090}
       TOKEN: ${AGENT_TOKEN:-}
       KEY: ${AGENT_KEY:-}
     # Upstream ships this commented out; enable once the agent is paired.

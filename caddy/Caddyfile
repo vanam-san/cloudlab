@@ -16,21 +16,16 @@
 # below with your domain, then run:
 #   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 #
-# TAILSCALE-ONLY SITES: every site imports `tailscale-only`,
-# which drops any client that is NOT on the tailnet.
+# TAILSCALE-ONLY SITES (template — set your IPs in tailscale-ips.caddy):
+# every site imports `tailscale-only`, which drops any client that is
+# NOT on the tailnet. Copy tailscale-ips.caddy.example to
+# tailscale-ips.caddy (git-ignored) and put your tailnet IPs there
+# (`tailscale ip -4` on each allowed device, plus 127.0.0.1/8 for local
+# healthchecks). To add/remove a device, edit the IP list in that ONE file.
 # The `not path /.well-known/acme-challenge/*` line lets Let's Encrypt
 # HTTP-01 challenges through so certificates can still be issued/renewed.
-# To add/remove a device, edit the IP list in ONE place (the snippet below).
-
-(tailscale-only) {
-	@blocked {
-		not remote_ip 100.118.223.53 100.81.118.77 100.113.224.16 100.118.184.75 100.78.190.9 127.0.0.1/8
-		not path /.well-known/acme-challenge/*
-	}
-	handle @blocked {
-		respond "Forbidden — Tailscale only" 403
-	}
-}
+# For a PUBLIC site instead, just omit `import tailscale-only` from its block.
+import tailscale-ips.caddy
 
 {
 	# Uncomment for Let's Encrypt expiry notices:

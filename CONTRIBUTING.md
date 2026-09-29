@@ -6,16 +6,18 @@ deployments; keep them that way.
 ## Ground rules
 
 1. **One folder per service, fully standalone.** Anyone should be able to
-   `git clone` (or copy) a single folder onto a fresh VPS and run it without
-   anything else from this repo — except Caddy, which is optional and only
-   needed for production domains.
+   copy a single folder (or sparse-checkout it) onto a fresh VPS and run
+   it without anything else from this repo — except Caddy, which is
+   optional and only needed for production domains.
 2. **One command to run, one to update.** Every service folder must have:
    - `run.sh` — idempotent: creates `.env`, pulls, starts, waits until ready.
    - `update.sh` — follows the app's official update docs (link them in a
      header comment), waits until the service is back.
+   - `stop.sh` / `restart.sh` — same conventions (wait until back on restart).
    - `README.md` — what it is, quick start, updating, production domain,
-     common commands.
+     common commands, plus a "Using this folder as a template" section.
    - `.env.example` + `.gitignore` (always ignore `.env`).
+   - All `*.sh` executable (`chmod +x`).
 3. **Localhost by default.** Backends bind `127.0.0.1:<port>`. Never expose
    an app port publicly from compose; production access goes through Caddy.
    Before picking a port, check it doesn't clash with the table in
@@ -25,7 +27,13 @@ deployments; keep them that way.
    leave a short comment saying what and why, with a link.
 5. **Verify by running.** Don't submit a service you haven't started with
    `./run.sh` and updated with `./update.sh` on a real machine. Paste the
-   resulting `docker compose ps` output in your PR.
+   resulting `docker compose ps` output in your PR. At minimum, check
+   `bash -n *.sh`, `docker compose config`, and `shellcheck *.sh` if
+   available. New folders must be executable (`chmod +x *.sh`) and must
+   keep template placeholders (no real domains, IPs, or passwords).
+6. **Template hygiene.** This repo is a template: never commit `.env`,
+   `plane-app/`, real domains,    tailnet IPs, or "running/paired" instance
+   state. Use `example.com` placeholders.
 
 ## Adding a service
 

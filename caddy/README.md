@@ -20,9 +20,11 @@ Requires Docker + Docker Compose on the server. Ports 80 and 443 must be free.
 That one command:
 
 1. Creates `.env` from `.env.example` (if missing)
-2. Pulls the latest Caddy image
-3. Validates the Caddyfile
-4. Starts Caddy and waits until healthy
+2. Creates `tailscale-ips.caddy` from its `.example` (if missing) —
+   put your tailnet IPs there before exposing any site
+3. Pulls the latest Caddy image
+4. Validates the Caddyfile
+5. Starts Caddy and waits until healthy
 
 ## Adding a site
 
@@ -30,9 +32,14 @@ Point the domain's DNS at this server, edit `Caddyfile`:
 
 ```caddyfile
 analytics.example.com {
+	import tailscale-only
 	reverse_proxy umami:3000
 }
 ```
+
+`import tailscale-only` restricts the site to your tailnet (recommended
+default in this template — set your IPs in `tailscale-ips.caddy`).
+For a public site, omit that line.
 
 Then reload without downtime:
 
@@ -73,12 +80,15 @@ docker compose down        # stop (keeps certificates)
 docker compose down -v     # stop + delete certificates/config
 ```
 
-## Pushing to GitHub
+## Using this folder as a template
 
-This folder is a standalone git repository. `.env` is git-ignored; the
-Caddyfile itself contains no secrets.
+This folder is self-contained: copy it out of this template repo to use
+it on its own (or clone this repo with sparse-checkout). `.env` and
+`tailscale-ips.caddy` are git-ignored; the Caddyfile itself contains no
+secrets (but remember to set your own tailnet IPs in `tailscale-ips.caddy`).
 
 ```bash
+cp -r caddy ~/my-caddy && cd ~/my-caddy
 git init
 git add .
 git commit -m "Initial caddy setup"

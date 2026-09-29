@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # One-command deploy for Sure: ./run.sh
 # 1. Creates .env from .env.example (git-ignored, never committed).
-# 2. Generates random POSTGRES_PASSWORD / SECRET_KEY_BASE on first run
-#    (upstream ships publicly known example defaults).
+# 2. Offers to generate strong random secrets (POSTGRES_PASSWORD,
+#    SECRET_KEY_BASE) instead of the defaults (upstream ships publicly
+#    known example defaults). Simple installs keep the defaults.
 # 3. Pulls the Sure + Postgres + Redis images.
 # 4. Starts the stack and waits until the app answers on localhost.
 # After the first start, register the admin account in the web UI, then
@@ -36,14 +37,40 @@ gen_hex() {
   fi
 }
 
-if grep -q '^POSTGRES_PASSWORD=change-me' "$ENV_FILE"; then
-  echo "==> Generating random POSTGRES_PASSWORD"
-  sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(gen_hex 24)|" "$ENV_FILE"
-fi
+# Simple install by default: keep the template defaults. Opt in to strong
+# random secrets with GENERATE_SECRETS=yes, or answer the prompt below.
+# Non-interactive runs keep the defaults (GENERATE_SECRETS is unset).
+ask_generate_secrets() {
+  if [[ "${GENERATE_SECRETS:-ask}" == "yes" ]]; then return 0; fi
+  if [[ "${GENERATE_SECRETS:-ask}" == "no" ]]; then return 1; fi
+  if [[ -t 0 ]]; then
+    local ans=""
+    read -rp "Generate strong random secrets instead of the defaults? [y/N] " ans || true
+    [[ "$ans" =~ ^[Yy]$ ]]
+  else
+    return 1
+  fi
+}
 
-if grep -q '^SECRET_KEY_BASE=change-me' "$ENV_FILE"; then
-  echo "==> Generating random SECRET_KEY_BASE"
-  sed -i "s|^SECRET_KEY_BASE=.*|SECRET_KEY_BASE=$(gen_hex 64)|" "$ENV_FILE"
+NEEDS_DB_PASSWORD=0
+NEEDS_SECRET_KEY=0
+grep -q '^POSTGRES_PASSWORD=change-me' "$ENV_FILE" && NEEDS_DB_PASSWORD=1 || true
+grep -q '^SECRET_KEY_BASE=change-me' "$ENV_FILE" && NEEDS_SECRET_KEY=1 || true
+
+if [[ "$NEEDS_DB_PASSWORD" -eq 1 || "$NEEDS_SECRET_KEY" -eq 1 ]]; then
+  if ask_generate_secrets; then
+    if [[ "$NEEDS_DB_PASSWORD" -eq 1 ]]; then
+      echo "==> Generating random POSTGRES_PASSWORD"
+      sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(gen_hex 24)|" "$ENV_FILE"
+    fi
+    if [[ "$NEEDS_SECRET_KEY" -eq 1 ]]; then
+      echo "==> Generating random SECRET_KEY_BASE"
+      sed -i "s|^SECRET_KEY_BASE=.*|SECRET_KEY_BASE=$(gen_hex 64)|" "$ENV_FILE"
+    fi
+  else
+    echo "==> Keeping default secrets (simple install)."
+    echo "    Re-run with GENERATE_SECRETS=yes ./run.sh to randomize them."
+  fi
 fi
 
 echo "==> Pulling latest images (${SURE_IMAGE:-ghcr.io/we-promise/sure:stable})"

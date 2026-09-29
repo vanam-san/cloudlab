@@ -17,8 +17,14 @@ echo "==> Recreating Beszel hub"
 docker compose up -d
 
 # shellcheck disable=SC1091
+set -a
 source .env 2>/dev/null || true
+set +a
+# Plain `pull` above skips profile-gated services, so pull the agent
+# image explicitly when paired; otherwise it would never update.
 if [[ -n "${AGENT_TOKEN:-}" && -n "${AGENT_KEY:-}" ]]; then
+  echo "==> Pulling agent image"
+  docker compose --profile agent pull beszel-agent
   echo "==> Recreating beszel-agent"
   docker compose --profile agent up -d beszel-agent
 fi

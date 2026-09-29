@@ -77,7 +77,7 @@ x-rails-env: &rails_env
   DB_PORT: 5432
   REDIS_URL: redis://redis:6379/1
   # NOTE: enabling OpenAI will incur costs when you use AI-related features in the app (chat, rules).  Make sure you have set appropriate spend limits on your account before adding this.
-  OPENAI_ACCESS_TOKEN: ${OPENAI_ACCESS_TOKEN}
+  OPENAI_ACCESS_TOKEN: ${OPENAI_ACCESS_TOKEN:-}
   OPENAI_MODEL: ${OPENAI_MODEL:-}
   OPENAI_URI_BASE: ${OPENAI_URI_BASE:-}
   LLM_CONTEXT_WINDOW: ${LLM_CONTEXT_WINDOW:-}
@@ -101,6 +101,8 @@ x-rails-env: &rails_env
 services:
   sure:
     image: ${SURE_IMAGE:-ghcr.io/we-promise/sure:stable}
+    # container_name is cosmetic; Caddy DNS comes from the service name
+    # `sure` (+ the `proxy.aliases` entry below), not this name.
     container_name: sure-web
     volumes:
       - app-storage:/rails/storage
@@ -165,6 +167,10 @@ services:
     networks:
       - sure_net
 
+  # Upstream's scheduled-db-backup service. TEMPLATE NOTE: enabling it
+  # requires creating ./bin/db-backup.sh from upstream
+  # (docs/hosting/docker.md) — that file is intentionally not vendored
+  # here, so `--profile backup` fails until you add it.
   backup:
     profiles:
       - backup

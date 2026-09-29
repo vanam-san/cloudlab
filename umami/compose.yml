@@ -29,6 +29,8 @@ services:
       db:
         condition: service_healthy
     environment:
+      # NOTE: POSTGRES_PASSWORD is interpolated raw into this URL —
+      # keep it URL-safe (hex from run.sh is fine; avoid @ / : ? #).
       DATABASE_URL: postgresql://${POSTGRES_USER:-umami}:${POSTGRES_PASSWORD:-umami}@db:5432/${POSTGRES_DB:-umami}
       APP_SECRET: ${APP_SECRET:?run ./run.sh to generate .env with a random APP_SECRET}
       DISABLE_TELEMETRY: 1

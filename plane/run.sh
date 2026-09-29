@@ -126,6 +126,53 @@ open(p, "w").write(text)
 EOF
 fi
 
+# --- restart policy (upgrades re-download compose, re-apply) ---
+# Upstream sets restart only via `deploy.restart_policy`, which older
+# `docker compose` (v2) ignores — without this, Plane stays down after a
+# host reboot while every other stack recovers. Idempotent: only adds
+# `restart:` to services missing it, as a floor that works on any compose
+# version (on compose v5 the upstream `deploy` block takes precedence and
+# yields `always`, which is equally reboot-safe). The one-shot `migrator`
+# keeps on-failure semantics.
+echo "==> Ensuring Plane services restart automatically"
+python3 - "$COMPOSE" <<'EOF'
+import re, sys
+p = sys.argv[1]
+lines = open(p).read().split('\n')
+try:
+    svc_start = next(i for i, l in enumerate(lines) if re.match(r'^services:\s*$', l))
+except StopIteration:
+    raise SystemExit("services: block not found, update patch")
+out = lines[:svc_start + 1]
+i = svc_start + 1
+header_re = re.compile(r'^  ([A-Za-z0-9_.-]+):\s*$')
+top_re = re.compile(r'^[A-Za-z0-9_.-]+:\s*$')
+while i < len(lines):
+    m = header_re.match(lines[i])
+    if not m:
+        # a new top-level key (volumes:, networks:, ...) ends the block
+        if top_re.match(lines[i]):
+            out.extend(lines[i:])
+            break
+        out.append(lines[i])
+        i += 1
+        continue
+    name = m.group(1)
+    # collect service body (4-space indented lines)
+    j = i + 1
+    body = []
+    while j < len(lines) and (lines[j].startswith('    ') or lines[j].strip() == ''):
+        body.append(lines[j])
+        j += 1
+    if not any(re.match(r'    restart:\s*\S', l) for l in body):
+        want = 'on-failure' if name == 'migrator' else 'unless-stopped'
+        body.insert(0, '    restart: %s' % want)
+    out.append(lines[i])
+    out.extend(body)
+    i = j
+open(p, 'w').write('\n'.join(out))
+EOF
+
 # --- minio workaround: Docker Hub repo retired, MinIO ships via Quay ---
 if ! docker image inspect minio/minio:latest >/dev/null 2>&1; then
   echo "==> Providing minio image from Quay (Docker Hub repo retired)"

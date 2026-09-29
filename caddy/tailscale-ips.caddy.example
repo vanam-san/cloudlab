@@ -1,0 +1,13 @@
+# Template copy: cp tailscale-ips.caddy.example tailscale-ips.caddy,
+# then replace the placeholders with your tailnet IPs (`tailscale ip -4`
+# on each allowed device). The live file is git-ignored — never commit it.
+# Keep 127.0.0.1/8 so local healthchecks / curl keep working.
+(tailscale-only) {
+	@blocked {
+		not remote_ip 100.x.x.x 127.0.0.1/8
+		not path /.well-known/acme-challenge/*
+	}
+	handle @blocked {
+		respond "Forbidden — Tailscale only" 403
+	}
+}

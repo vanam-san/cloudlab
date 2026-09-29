@@ -13,7 +13,8 @@ version check).
 ## Quick start (one command)
 
 Requires Docker + Docker Compose on the server. First boot pulls ~10 images
-and runs DB migrations, so allow several minutes.
+and runs DB migrations, so allow up to ~10 minutes on a small VPS
+(`run.sh` polls until ready).
 
 ```bash
 ./run.sh
@@ -25,7 +26,11 @@ That one command:
 2. Runs `./setup.sh install` on first run (downloads compose + env as v1.4.2)
 3. Points `plane-app/plane.env` at localhost:9080 (+ CORS) and generates
    `SECRET_KEY` / `LIVE_SERVER_SECRET_KEY`
-4. Binds Plane's proxy ports to 127.0.0.1
+4. Binds Plane's proxy ports to 127.0.0.1, attaches it to the shared
+   `cloudlab-proxy` network (so Caddy can reach it), and guarantees
+   automatic restart (upstream sets it only via `deploy.restart_policy`,
+   which older compose ignores — without this Plane would stay down
+   after a host reboot)
 5. Provides the minio image from Quay (`minio/minio` on Docker Hub is
    retired — without this, upstream's pull step fails)
 6. Starts everything and waits until http://localhost:9080 answers 200
@@ -85,12 +90,14 @@ docker compose -f plane-app/docker-compose.yaml --env-file plane-app/plane.env p
 Data lives in named Docker volumes (`pgdata`, `uploads`, `redisdata`, ...),
 so it survives restarts and updates.
 
-## Pushing to GitHub
+## Using this folder as a template
 
-This folder is a standalone git repository. `.env` and generated
-`plane-app/` are git-ignored; `setup.sh` + scripts are committed.
+This folder is self-contained: copy it out of this template repo to use
+it on its own (or clone this repo with sparse-checkout). `.env` and
+generated `plane-app/` are git-ignored; `setup.sh` + scripts are committed.
 
 ```bash
+cp -r plane ~/my-plane && cd ~/my-plane
 git init
 git add .
 git commit -m "Initial plane setup"

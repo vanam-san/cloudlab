@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# Live tailnet allow-list (template ships tailscale-ips.caddy.example).
+tailscale-ips.caddy
+
 # Runtime data
 data/
 *.log

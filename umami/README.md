@@ -14,7 +14,9 @@ Requires Docker + Docker Compose on the server.
 
 That one command:
 
-1. Creates `.env` from `.env.example` (if missing) with a random `APP_SECRET`
+1. Creates `.env` from `.env.example` (if missing). Simple installs keep
+   the defaults; answer the prompt (or run with `GENERATE_SECRETS=yes`)
+   for strong random `APP_SECRET` / `POSTGRES_PASSWORD`
 2. Pulls the latest Umami image
 3. Starts Umami + PostgreSQL
 4. Waits until healthy, then prints the URL
@@ -31,7 +33,7 @@ Edit `.env` after the first run if needed:
 | `UMAMI_IMAGE`       | `docker.umami.is/umami-software/umami:latest` | Umami Docker image   |
 | `UMAMI_PORT`        | `3000`                                     | Host port                |
 | `POSTGRES_USER`     | `umami`                                    | DB user                  |
-| `POSTGRES_PASSWORD` | `umami` (auto)                             | DB password              |
+| `POSTGRES_PASSWORD` | `umami` (default; `run.sh` offers to randomize on fresh installs) | DB password (keep URL-safe if you change it — see `compose.yml`) |
 | `POSTGRES_DB`       | `umami`                                    | DB name                  |
 | `APP_SECRET`        | `change-me` (auto-generated)               | Auth token secret        |
 
@@ -75,11 +77,14 @@ docker compose down -v     # stop + delete database volume
 Database data lives in the named Docker volume `umami-db`, so it survives
 restarts and updates.
 
-## Deploying / backing up / GitHub
+## Using this folder as a template
 
-This folder is a standalone git repository. Push it up and run it on any VPS:
+This folder is self-contained: copy it out of this template repo to use
+it on its own (or clone this repo with sparse-checkout). Push it up and
+run it on any VPS:
 
 ```bash
+cp -r umami ~/my-umami && cd ~/my-umami
 git init
 git add .
 git commit -m "Initial umami setup"

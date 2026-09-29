@@ -18,14 +18,19 @@ internet ──▶ Caddy (:80/:443, auto-TLS) ──▶ app-name:internal-port �
 
 ## Services
 
-| Folder | App | Local URL | Production domain (via Caddy) | Status |
-|---|---|---|---|---|
-| [umami/](umami/) | Web analytics | http://localhost:3000 | `analytics.example.com` | running |
-| [beszel/](beszel/) | Server monitoring (hub + agent) | http://localhost:8090 | `monitor.example.com` | running, VPS paired |
-| [glance/](glance/) | Dashboard | http://localhost:8080 | `glance.example.com` | running |
-| [sure/](sure/) | Finance manager | http://localhost:3001 | `sure.example.com` | running |
-| [caddy/](caddy/) | Reverse proxy | — (ports 80/443) | — | running |
-| [plane/](plane/) | Project management | http://localhost:9080 | `plane.example.com` | running |
+| Folder | App | Local URL | Production domain (via Caddy) |
+|---|---|---|---|
+| [umami/](umami/) | Web analytics | http://localhost:3000 | `analytics.example.com` |
+| [beszel/](beszel/) | Server monitoring (hub + agent) | http://localhost:8090 | `monitor.example.com` |
+| [glance/](glance/) | Dashboard | http://localhost:8080 | `glance.example.com` |
+| [sure/](sure/) | Finance manager | http://localhost:3001 | `sure.example.com` |
+| [caddy/](caddy/) | Reverse proxy | — (ports 80/443) | — |
+| [plane/](plane/) | Project management | http://localhost:9080 | `plane.example.com` |
+
+> This is a template repo — the domains above are placeholders. All
+> Caddy sites are Tailscale-only by default (see `caddy/Caddyfile`):
+> set your tailnet IPs in the `tailscale-only` snippet, or omit
+> `import tailscale-only` from a site block to make it public.
 
 ## Requirements
 
@@ -70,9 +75,12 @@ docker compose down -v       # stop AND delete data volumes
 ## Going to production (domains + HTTPS)
 
 1. Point each domain's DNS (A/AAAA record) at the VPS.
-2. Uncomment the matching block in [caddy/Caddyfile](caddy/Caddyfile) and set
-   your real domain.
-3. Reload Caddy without downtime:
+2. Put your tailnet IPs in the `tailscale-only` snippet at the top of
+   [caddy/Caddyfile](caddy/Caddyfile) (or omit `import tailscale-only`
+   from a site block to make that site public).
+3. Uncomment the matching block(s) in [caddy/Caddyfile](caddy/Caddyfile)
+   and set your real domain.
+4. Reload Caddy without downtime:
 
 ```bash
 cd caddy
@@ -118,9 +126,11 @@ cloudlab/
 ```
 
 Each service folder contains `compose.yml` (or upstream equivalent),
-`.env.example`, `.gitignore`, `run.sh`, `update.sh`, and `README.md` with
-service-specific instructions. Folders are independent — deploy one, some,
-or all.
+`.env.example`, `.gitignore`, `run.sh`, `update.sh`, `stop.sh`,
+`restart.sh`, and `README.md` with service-specific instructions.
+Folders are independent — copy one, some, or all out of this template
+repo and deploy it standalone (see "Using this folder as a template" in
+each service README).
 
 ## Contributing
 

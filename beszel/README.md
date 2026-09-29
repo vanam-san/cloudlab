@@ -96,11 +96,13 @@ docker compose down -v     # stop + delete hub data volume
 Hub data lives in the named Docker volume `beszel-data`, so it survives
 restarts and updates.
 
-## Pushing to GitHub
+## Using this folder as a template
 
-This folder is a standalone git repository:
+This folder is self-contained: copy it out of this template repo to use
+it on its own (or clone this repo with sparse-checkout):
 
 ```bash
+cp -r beszel ~/my-beszel && cd ~/my-beszel
 git init
 git add .
 git commit -m "Initial beszel setup"

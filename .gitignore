@@ -1,0 +1,13 @@
+# Template-wide safety net (each service folder also has its own .gitignore).
+# Runtime secrets — never commit.
+.env
+.env.*
+!.env.example
+
+# Plane generates these via setup.sh / run.sh (hold SECRET_KEY, DB passwords).
+plane-app/
+**/plane-app/
+
+# Runtime cruft.
+*.log
+data/

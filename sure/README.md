@@ -18,10 +18,11 @@ Requires Docker + Docker Compose on the server.
 
 That one command:
 
-1. Creates `.env` from `.env.example` (if missing)
-2. Generates random `POSTGRES_PASSWORD` / `SECRET_KEY_BASE`
-3. Pulls the latest images
-4. Starts Sure + Postgres + Redis on localhost:3001 and waits until ready
+1. Creates `.env` from `.env.example` (if missing). Simple installs keep
+   the defaults; answer the prompt (or run with `GENERATE_SECRETS=yes`)
+   for strong random `POSTGRES_PASSWORD` / `SECRET_KEY_BASE`
+2. Pulls the latest images
+3. Starts Sure + Postgres + Redis on localhost:3001 and waits until ready
 
 Open the printed URL and register the admin account, then restrict future
 signups under Settings > Self-Hosting > Onboarding (Invite-only or Closed).
@@ -88,11 +89,14 @@ Data lives in the named Docker volumes (`postgres-data`, `redis-data`,
 The `backup` profile from upstream is not wired up here (it needs
 upstream's `bin/db-backup.sh`); plain `./run.sh` never starts it.
 
-## Pushing to GitHub
+## Using this folder as a template
 
-This folder is a standalone git repository. `.env` is git-ignored.
+This folder is self-contained: copy it out of this template repo to use
+it on its own (or clone this repo with sparse-checkout). `.env` is
+git-ignored.
 
 ```bash
+cp -r sure ~/my-sure && cd ~/my-sure
 git init
 git add .
 git commit -m "Initial sure setup"

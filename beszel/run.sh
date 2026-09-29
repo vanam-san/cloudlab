@@ -32,6 +32,13 @@ docker network inspect cloudlab-proxy >/dev/null 2>&1 || docker network create c
 echo "==> Pulling latest images (${BESZEL_IMAGE:-henrygd/beszel:latest})"
 docker compose pull
 
+# Plain `pull` skips profile-gated services, so pull the agent image
+# explicitly when paired; otherwise it would never update.
+if [[ -n "${AGENT_TOKEN:-}" && -n "${AGENT_KEY:-}" ]]; then
+  echo "==> Pulling agent image (${BESZEL_AGENT_IMAGE:-henrygd/beszel-agent:latest})"
+  docker compose --profile agent pull beszel-agent
+fi
+
 echo "==> Starting Beszel hub"
 docker compose up -d
 

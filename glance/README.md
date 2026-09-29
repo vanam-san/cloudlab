@@ -56,17 +56,19 @@ to the production domains.
 ```bash
 ./run.sh                         # pull latest + (re)start
 ./update.sh                      # update Glance, config untouched
-docker compose logs glance       # usually a config error if it won't start
+docker compose logs -f glance   # usually a config error if it won't start
 docker compose restart glance    # apply config/glance.yml changes
 docker compose down              # stop (config stays in ./config)
 ```
 
-## Pushing to GitHub
+## Using this folder as a template
 
-This folder is a standalone git repository. `.env` is git-ignored, but
-`config/glance.yml` is committed on purpose.
+This folder is self-contained: copy it out of this template repo to use
+it on its own (or clone this repo with sparse-checkout). `.env` is
+git-ignored, but `config/glance.yml` is committed on purpose.
 
 ```bash
+cp -r glance ~/my-glance && cd ~/my-glance
 git init
 git add .
 git commit -m "Initial glance setup"
