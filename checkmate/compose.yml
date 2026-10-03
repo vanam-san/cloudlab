@@ -1,0 +1,85 @@
+# Checkmate - uptime & infrastructure monitoring
+# Image: ghcr.io/bluewave-labs/checkmate:latest
+# Docs: https://checkmate.so/docs/getting-started/installation#option-1-docker
+# Upstream repo: https://github.com/bluewave-labs/checkmate (reference
+# file docker/docker-compose.yaml vendored here with local adaptations).
+#
+# Setup notes (local adaptations for this VPS):
+# - Upstream ships a single all-in-one app image (frontend served from the
+#   API server) plus MongoDB — only these two services. Service names
+#   follow upstream (`checkmate`, `mongodb`). Only `checkmate` joins the
+#   shared `cloudlab-proxy` network, so its DNS name is globally unique
+#   there (see naming rule in ../caddy/Caddyfile); `mongodb` stays on the
+#   private default network only, where the generic name can't collide.
+# - The app port is bound to 127.0.0.1 only for direct local access
+#   (default 8073 on the host -> container 52345: upstream's 52345 cannot
+#   bind on this host, so only the host side is remapped).
+#   In production the service gets a domain via the Caddy reverse proxy
+#   (see ../caddy) over the shared network as `checkmate:52345` — Caddy
+#   never uses the localhost port. TLS terminates at Caddy; the container
+#   serves plain HTTP behind it.
+# - CLIENT_HOST must be the URL users reach the app at (CORS + links in
+#   notifications). Default is the localhost URL; set it to the public
+#   domain for production (see README "Production domain").
+# - JWT_SECRET signs auth tokens (run.sh generates a random one on first
+#   start). Rotating it later just logs everyone out — safe anytime,
+#   unlike DB passwords.
+# - Healthchecks are vendored from upstream (node-based liveness probe on
+#   the internal :52346/livez endpoint, mongosh ping for Mongo).
+# - `stop_grace_period: 60s` on the app is upstream's (lets in-flight jobs
+#   finish on stop/restart).
+# - The Docker-socket mount for container monitoring (see upstream
+#   "Monitoring Docker containers") is intentionally NOT included:
+#   socket access is root-equivalent on the host. Bind-mount it yourself
+#   in a compose.override.yaml if you want it (see README).
+services:
+  checkmate:
+    image: ${CHECKMATE_IMAGE:-ghcr.io/bluewave-labs/checkmate:latest}
+    container_name: checkmate
+    restart: unless-stopped
+    ports:
+      # Localhost-only; public access goes through Caddy in production.
+      - "127.0.0.1:${CHECKMATE_PORT:-8073}:52345"
+    environment:
+      # No Mongo credentials: matches upstream (no auth in the reference
+      # file). Mongo is unreachable except from the app on the private
+      # default network, and JWT_SECRET below is the managed secret.
+      DB_CONNECTION_STRING: mongodb://mongodb:27017/${MONGO_DB:-uptime_db}
+      CLIENT_HOST: ${CLIENT_HOST:-http://localhost:${CHECKMATE_PORT:-8073}}
+      JWT_SECRET: ${JWT_SECRET:?run ./run.sh to generate .env with a random JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:52346/livez',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 3s
+      start_period: 60s
+      retries: 3
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - default
+      - proxy
+
+  mongodb:
+    image: mongo:8.0
+    container_name: checkmate-mongodb
+    restart: unless-stopped
+    command: ["mongod", "--quiet", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--quiet"]
+      interval: 5s
+      timeout: 30s
+      retries: 30
+
+volumes:
+  mongo-data:
+
+networks:
+  proxy:
+    name: cloudlab-proxy
+    external: true
