@@ -1,0 +1,42 @@
+# Uptime Kuma - uptime monitoring
+# Image: louislam/uptime-kuma:2
+# Docs: https://github.com/louislam/uptime-kuma
+#
+# Setup notes (local adaptations for this VPS):
+# - Single container, no database: all state (monitors, history, users)
+#   lives in /app/data (named volume `uptime-kuma`, per upstream).
+# - Service is named `uptime-kuma`, globally unique on the shared
+#   `cloudlab-proxy` network (see naming rule in ../caddy/Caddyfile).
+# - The app port is bound to 127.0.0.1 only for direct local access.
+#   Upstream listens on 3001 internally, but host port 3001 is taken by
+#   Sure on this VPS, so it maps to 3002 on the host instead.
+#   In production the service gets a domain via the Caddy reverse proxy
+#   (see ../caddy) over the shared network as `uptime-kuma:3001` — Caddy
+#   never uses the localhost port.
+# - No container healthcheck (minimal image, no guaranteed probe tool);
+#   ./run.sh polls HTTP until ready.
+# - No setup needed in .env beyond image/port: the admin account is
+#   created in the web UI on first visit.
+services:
+  uptime-kuma:
+    image: ${UPTIME_KUMA_IMAGE:-louislam/uptime-kuma:2}
+    container_name: uptime-kuma
+    restart: unless-stopped
+    ports:
+      # Localhost-only; public access goes through Caddy in production.
+      # Default 3002: 3000 (umami) and 3001 (sure) are taken; the
+      # container-internal port is always 3001.
+      - "127.0.0.1:${UPTIME_KUMA_PORT:-3002}:3001"
+    volumes:
+      - uptime-kuma:/app/data
+    networks:
+      - default
+      - proxy
+
+volumes:
+  uptime-kuma:
+
+networks:
+  proxy:
+    name: cloudlab-proxy
+    external: true
