@@ -1,0 +1,53 @@
+# Checkmk - infrastructure & application monitoring
+# Image: checkmk/check-mk-raw:2.4.0-latest (Raw edition: 100% open source)
+# Docs: https://docs.checkmk.com/latest/en/introduction_docker.html
+#
+# Setup notes (local adaptations for this VPS):
+# - Single container = single site (no separate database; state lives in
+#   /omd/sites). Service is named `checkmk`, globally unique on the shared
+#   `cloudlab-proxy` network (see naming rule in ../caddy/Caddyfile).
+# - The web UI (container port 5000) is bound to 127.0.0.1 only for direct
+#   local access (default 8072: 3000/3001/8080/8090/9080 are taken by other
+#   stacks). In production the service gets a domain via the Caddy reverse
+#   proxy (see ../caddy) over the shared network as `checkmk:5000` — Caddy
+#   never uses the localhost port. The /cmk/ subpath works transparently.
+# - The agent receiver (container port 8000, for agent-controller
+#   registration) is NOT published by default. Open it per the agent guide
+#   in README.md when you enroll external hosts.
+# - `tmpfs` for the site tmp dir is required by upstream (hardcoded to the
+#   default site id `cmk`; if you change CMK_SITE_ID, change the tmpfs path
+#   to match: /opt/omd/sites/<id>/tmp).
+# - CMK_PASSWORD sets the `cmkadmin` login at site creation and is baked
+#   into the site volume — run.sh only randomizes it on a fresh volume
+#   (change it later in the UI under Setup > Users instead).
+# - No container healthcheck (minimal image, no guaranteed probe tool);
+#   ./run.sh polls the site URL until ready. First boot creates the site
+#   and can take several minutes.
+services:
+  checkmk:
+    image: ${CHECKMK_IMAGE:-checkmk/check-mk-raw:2.4.0-latest}
+    container_name: checkmk
+    restart: unless-stopped
+    ports:
+      # Localhost-only; public access goes through Caddy in production.
+      - "127.0.0.1:${CHECKMK_PORT:-8072}:5000"
+    environment:
+      CMK_SITE_ID: ${CMK_SITE_ID:-cmk}
+      CMK_PASSWORD: ${CMK_PASSWORD:?run ./run.sh to generate .env with a random CMK_PASSWORD}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - checkmk:/omd/sites:rw
+    tmpfs:
+      # Must match CMK_SITE_ID (default cmk).
+      - /opt/omd/sites/cmk/tmp:uid=1000,gid=1000
+    networks:
+      - default
+      - proxy
+
+volumes:
+  checkmk:
+
+networks:
+  proxy:
+    name: cloudlab-proxy
+    external: true
