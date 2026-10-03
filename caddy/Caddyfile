@@ -73,6 +73,30 @@ import tailscale-ips.caddy
 # 	}
 # }
 
+# Checkmk monitoring (container checkmk:5000 — the site web server
+# listens on :5000 internally; localhost:8072 is only the host mapping.
+# The /cmk/ site path works transparently behind the proxy) — Tailscale-only
+# checkmk.domain.dev {
+# 	import tailscale-only
+# 	reverse_proxy checkmk:5000
+# }
+
+# Uptime Kuma monitoring (container uptime-kuma:3001 — internal port is
+# always 3001, even though the host maps localhost:3002 for direct
+# access) — Tailscale-only
+# uptime.domain {
+# 	import tailscale-only
+# 	reverse_proxy uptime-kuma:3001
+# }
+
+# Checkmate monitoring (container checkmate:52345 — upstream default port
+# internally; the host maps localhost:8073 as 52345 can't bind here) — Tailscale-only. Set CLIENT_HOST to this
+# domain in checkmate/.env for production (CORS + notification links).
+# checkmate.example.com {
+# 	import tailscale-only
+# 	reverse_proxy checkmate:52345
+# }
+
 # DEFAULT-DENY (active): anything not matching a site above — direct-IP
 # probes, unknown SNI, scanners — gets its connection dropped instead of
 # a 404. Per-site `import tailscale-only` enforces tailnet access on
