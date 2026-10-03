@@ -1,7 +1,27 @@
 # cloudlab
 
-Self-hosted services on a single VPS. Each folder is a standalone deployment:
-clone it anywhere, run one command, get a working app.
+A cloud lab on a single VPS: a collection of independent services you
+activate individually. Run only what you need (one, some, or all) —
+each folder is a standalone deployment; `cd` into it, run one command,
+get a working app. Anything you don't start costs nothing and gets no
+traffic.
+
+**8 apps + Caddy · 1 VPS · 1 command per service · automatic HTTPS.**
+
+```mermaid
+flowchart LR
+    Internet --> Caddy["Caddy :80/:443<br/>auto-TLS, default-deny"]
+    Caddy --> Umami["umami:3000"]
+    Caddy --> Beszel["beszel:8090"]
+    Caddy --> Glance["glance:8080"]
+    Caddy --> Sure["sure:3000"]
+    Caddy --> Plane["plane:80"]
+    Caddy --> Checkmk["checkmk:5000"]
+    Caddy --> Kuma["uptime-kuma:3001"]
+    Caddy --> Mate["checkmate:52345"]
+    Umami & Beszel & Glance & Sure & Plane & Checkmk & Kuma & Mate --- Net[("cloudlab-proxy<br/>shared Docker network")]
+    Local["127.0.0.1:PORT<br/>direct local access"] -.-> Umami
+```
 
 ## Architecture
 
@@ -18,6 +38,12 @@ internet ──▶ Caddy (:80/:443, auto-TLS) ──▶ app-name:internal-port �
 
 ## Services
 
+There is no master switch and no all-at-once compose file — each service
+is activated individually from its own folder (`cd <service> && ./run.sh`)
+and runs as its own Docker Compose stack. Stacks share nothing except the
+`cloudlab-proxy` network (created automatically) and Caddy, if you want
+domains/HTTPS.
+
 | Folder | App | Local URL | Production domain (via Caddy) |
 |---|---|---|---|
 | [umami/](umami/) | Web analytics | http://localhost:3000 | `analytics.example.com` |
@@ -26,6 +52,24 @@ internet ──▶ Caddy (:80/:443, auto-TLS) ──▶ app-name:internal-port �
 | [sure/](sure/) | Finance manager | http://localhost:3001 | `sure.example.com` |
 | [caddy/](caddy/) | Reverse proxy | — (ports 80/443) | — |
 | [plane/](plane/) | Project management | http://localhost:9080 | `plane.example.com` |
+| [checkmk/](checkmk/) | Infrastructure monitoring | http://localhost:8072 | `checkmk.domain.dev` |
+| [uptime-kuma/](uptime-kuma/) | Uptime monitoring | http://localhost:3002 | `uptime.domain` |
+| [checkmate/](checkmate/) | Uptime & infra monitoring | http://localhost:8073 | `checkmate.example.com` |
+
+> Pick either monitor — or both: [Beszel](beszel/) is near-zero
+> maintenance with great dashboards, [Checkmk](checkmk/) is the full
+> platform (thousands of checks, discovery, escalations, SLA reports).
+
+**In brief:**
+- Umami — website visitor analytics
+- Beszel — server health (CPU, disks, containers), near-zero maintenance
+- Glance — start-page dashboard
+- Sure — money tracking
+- Plane — project tracking
+- Checkmk — deep infrastructure monitoring (checks, discovery, escalations, SLA reports)
+- Uptime Kuma — simplest uptime watcher
+- Checkmate — uptime plus infra checks, PageSpeed, and status pages
+- Caddy — front door giving the others HTTPS domains
 
 > This is a template repo — the domains above are placeholders. All
 > Caddy sites are Tailscale-only by default (see `caddy/Caddyfile`):
@@ -40,7 +84,8 @@ internet ──▶ Caddy (:80/:443, auto-TLS) ──▶ app-name:internal-port �
 
 ## Usage
 
-Each service folder works the same way.
+Each service folder works the same way (see "Services" above for the
+pick-what-you-need model).
 
 **Start / install (one command):**
 
@@ -109,8 +154,41 @@ app-specific backup tools are documented per service:
 - Beszel: `beszel-data` volume; pairing survives updates.
 - Sure: `postgres-data`, `redis-data`, `app-storage` volumes.
 - Plane: `plane-app/` dir + volumes; `./setup.sh backup` for full backups.
+- Checkmk: `checkmk` volume (whole site; snapshot it, or `omd backup` inside — see checkmk README).
+- Uptime Kuma: `uptime-kuma` volume (monitors + history; snapshot it — see uptime-kuma README).
+- Checkmate: `mongo-data` volume (snapshot it — see checkmate README).
 - Caddy: `caddy-data` (certificates), `caddy-config`.
 - Glance: stateless; the config in `glance/config/` is the backup.
+
+## Operations
+
+**Disaster recovery:** total-loss rebuild is documented in
+[DISASTER-RECOVERY.md](DISASTER-RECOVERY.md) (what lives off-box, backup
+commands, rebuild order, Let's Encrypt caveat). Restores are rehearsed on
+a spare machine and logged there — latest status: not yet drilled.
+
+**Image policy:** app images track stable release lines
+(`sure:stable`, `check-mk-raw:2.4.0-latest`, …) while some stacks use
+`:latest`; infrastructure images are pinned (`postgres:16-alpine`,
+`mongo:8.0`). `run.sh` pulls on every run, so pin an exact version in
+`.env` when you need immutability — otherwise use `update.sh` for
+deliberate, one-service-at-a-time upgrades.
+
+**The lab monitors itself** (recommended setup — wire once, sleep well):
+
+- [ ] Uptime Kuma: one monitor per Local URL in the table above, plus
+      your main HTTPS domain once live (expects 200 — proves Caddy +
+      app + TLS end-to-end in a single probe).
+- [ ] Beszel (already running): disk-space and load alerts for the VPS
+      in the hub UI.
+- [ ] Pick one alerter to avoid double pages during maintenance (see
+      "In brief" — overlapping monitors are intentional, overlapping
+      wake-ups are not).
+
+**CI:** every push runs [.github/workflows/smoke.yml](.github/workflows/smoke.yml)
+— `bash -n` over all scripts, `docker compose config` per stack against
+example envs, and a Caddyfile validation. Nothing is deployed from CI;
+it only proves the repo is internally consistent.
 
 ## Repository layout
 
@@ -122,15 +200,17 @@ cloudlab/
 ├── beszel/    # monitoring
 ├── glance/    # dashboard (config/ is the dashboard)
 ├── sure/      # finance
-└── plane/     # project management (upstream setup.sh based)
+├── plane/     # project management (upstream setup.sh based)
+├── checkmk/   # monitoring platform (or use beszel/ for lightweight)
+├── uptime-kuma/ # uptime monitoring
+└── checkmate/ # uptime & infra monitoring
 ```
 
 Each service folder contains `compose.yml` (or upstream equivalent),
 `.env.example`, `.gitignore`, `run.sh`, `update.sh`, `stop.sh`,
 `restart.sh`, and `README.md` with service-specific instructions.
-Folders are independent — copy one, some, or all out of this template
-repo and deploy it standalone (see "Using this folder as a template" in
-each service README).
+Folders are independent — run and/or copy out one, some, or all (see
+"Using this folder as a template" in each service README).
 
 ## Contributing
 
