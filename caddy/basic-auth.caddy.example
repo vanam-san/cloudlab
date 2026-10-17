@@ -1,21 +1,21 @@
 # Template copy: cp basic-auth.caddy.example basic-auth.caddy — or simply
 # run ./run.sh, which generates the live file with a strong random password
-# (printed once). The live file is git-ignored — never commit it.
+# (printed once) and stores its bcrypt hash here. The live file is git-ignored
+# — never commit it.
 #
 # This snippet is the DEFAULT gate for every site: the browser prompts for
 # credentials before the request reaches the app (which still has its own
 # login behind it). Add/remove users by editing the block below, then:
 #   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
-# IMPORTANT: Caddy's http_basic provider base64-decodes the stored password.
-# Store passwords as `username base64(plaintext_password)`.
-# To generate: echo -n 'plaintext' | base64
-# (Caddy also accepts bcrypt hashes starting with $2y$.)
+# IMPORTANT: Caddy never stores plaintext passwords — each value must be a
+# password HASH (bcrypt by default). Generate one with:
+#   docker run --rm caddy:latest caddy hash-password --plaintext 'your-password'
 (basic-auth) {
 	@needs_auth {
 		not path /.well-known/acme-challenge/*
 	}
 	basic_auth @needs_auth {
-		__BASIC_AUTH_USER__ __BASIC_AUTH_PASSWORD_BASE64__
-		# anotheruser base64-here
+		__BASIC_AUTH_USER__ __BASIC_AUTH_HASH__
+		# anotheruser $2a$14$hashedpasswordhere
 	}
 }

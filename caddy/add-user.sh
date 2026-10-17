@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # add-user.sh — interactively add a new user to Caddy's Basic Auth file.
 #
-# Prompts for a username and password, appends a `user base64(pass)` entry to
+# Prompts for a username and password, appends a `username <bcrypt-hash>` entry to
 # the `basic_auth` block in ./basic-auth.caddy, validates the Caddyfile with a
 # throwaway Caddy container, then reloads Caddy.
 #
-# Caddy's http_basic provider base64-decodes the stored password, so credentials
-# are stored as `username base64(plaintext_password)`. basic-auth.caddy is
-# git-ignored — never commit it.
+# Caddy stores password hashes (bcrypt by default), not plaintext.
+# basic-auth.caddy is git-ignored — never commit it.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -20,22 +19,14 @@ ENV_FILE=".env"
   exit 1
 }
 
+if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+  echo "Docker is required to generate a bcrypt hash for the password." >&2
+  exit 1
+fi
+
 # shellcheck disable=SC1091
 source "$ENV_FILE" 2>/dev/null || true
 IMAGE="${CADDY_IMAGE:-caddy:latest}"
-
-wait_healthy() {
-  for i in $(seq 1 30); do
-    STATUS="$(docker inspect caddy --format '{{.State.Health.Status}}' 2>/dev/null || echo starting)"
-    [[ "$STATUS" == "healthy" ]] && return 0
-    if [[ $i -eq 30 ]]; then
-      echo "Timed out waiting for Caddy (status: $STATUS)" >&2
-      return 1
-    fi
-    sleep 2
-  done
-  return 1
-}
 
 # --- collect credentials -----------------------------------------------------
 read -rp "New Basic Auth username: " USER
@@ -57,13 +48,15 @@ read -rsp "New Basic Auth password: " PASS; echo
 [[ -n "$PASS" ]] || { echo "Password must not be empty" >&2; exit 1; }
 read -rsp "Confirm password: " PASS2; echo
 [[ "$PASS" == "$PASS2" ]] || { echo "Passwords do not match" >&2; exit 1; }
-case "$PASS" in
-  *\"*|*\\*) echo "Password must not contain double quotes or backslashes" >&2; exit 1 ;;
-esac
 
-# Tab-indented entry: username base64(password). Caddy base64-decodes the
-# stored password and compares it with the plaintext sent by the client.
-ENTRY=$'\t'"${USER} $(printf '%s' "$PASS" | base64 -w0)"
+HASH="$(printf '%s\n' "$PASS" | docker run --rm -i "$IMAGE" caddy hash-password)"
+if [[ -z "$HASH" ]]; then
+  echo "Failed to generate bcrypt hash for password" >&2
+  exit 1
+fi
+
+# Tab-indented entry: username <bcrypt-hash>
+ENTRY=$'\t'"${USER} ${HASH}"
 
 # --- build candidate file in a temp file (never in place yet) ----------------
 TMP="$(mktemp)"
@@ -91,18 +84,14 @@ if [[ ! -f tailscale-ips.caddy ]]; then
   cp tailscale-ips.caddy.example tailscale-ips.caddy
 fi
 
-if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-  docker pull -q "$IMAGE" >/dev/null 2>&1 || true
-  if ! docker run --rm \
-    -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" \
-    -v "$TMP:/etc/caddy/basic-auth.caddy:ro" \
-    -v "$PWD/tailscale-ips.caddy:/etc/caddy/tailscale-ips.caddy:ro" \
-    "$IMAGE" caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile >/dev/null; then
-    echo "Caddyfile validation failed — $AUTH_FILE was NOT changed." >&2
-    exit 1
-  fi
-else
-  echo "WARNING: docker unavailable — skipping validation" >&2
+docker pull -q "$IMAGE" >/dev/null 2>&1 || true
+if ! docker run --rm \
+  -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" \
+  -v "$TMP:/etc/caddy/basic-auth.caddy:ro" \
+  -v "$PWD/tailscale-ips.caddy:/etc/caddy/tailscale-ips.caddy:ro" \
+  "$IMAGE" caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile >/dev/null; then
+  echo "Caddyfile validation failed — $AUTH_FILE was NOT changed." >&2
+  exit 1
 fi
 
 # --- publish in place (keeps the same inode, so bind mounts stay valid) ------
@@ -114,22 +103,10 @@ echo "Added user '$USER' to $AUTH_FILE"
 
 # --- apply to running Caddy --------------------------------------------------
 if docker ps --format '{{.Names}}' | grep -qx caddy; then
-  if ! docker exec caddy cat /etc/caddy/basic-auth.caddy | cmp -s - "$AUTH_FILE"; then
-    echo "WARNING: the running Caddy container holds a stale copy of $AUTH_FILE"
-    echo "(Docker bind-mounts single files by inode; the file was replaced earlier.)"
-    read -rp "Recreate the Caddy container now so it picks up the new credentials? [y/N] " ANS
-    if [[ "$ANS" =~ ^[Yy]$ ]]; then
-      echo "==> Recreating Caddy"
-      docker compose up -d --force-recreate caddy
-      wait_healthy
-    else
-      echo "Skipping recreate; reload may not take effect until Caddy is restarted." >&2
-    fi
-  fi
   echo "==> Reloading Caddy"
   docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 else
   echo "Caddy container is not running — start it with ./run.sh (or docker compose up -d)."
 fi
 
-echo "Done. Credentials in $AUTH_FILE are base64-encoded — keep the file private."
+echo "Done. Credentials in $AUTH_FILE are stored as bcrypt hashes — keep the file private."

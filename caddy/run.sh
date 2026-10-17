@@ -37,15 +37,19 @@ echo "==> Pulling latest images (${CADDY_IMAGE:-caddy:latest})"
 docker compose pull
 
 # Default browser-access gate: HTTP Basic Auth on every site. Generate
-# the live snippet (git-ignored) with a strong random password, stored
-# as a plain username/password pair. Printed once — store it now.
+# the live snippet (git-ignored) with a strong random password; only a
+# bcrypt hash is stored in the file. Printed once — store it now.
 if [[ ! -f "basic-auth.caddy" ]]; then
   echo "==> Creating basic-auth.caddy (Basic Auth credentials)"
   BASIC_AUTH_USER="${BASIC_AUTH_USER:-admin}"
   BASIC_AUTH_PASSWORD="$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)"
-  BASIC_AUTH_PASSWORD_BASE64="$(printf '%s' "$BASIC_AUTH_PASSWORD" | base64 -w0)"
+  BASIC_AUTH_HASH="$(printf '%s\n' "$BASIC_AUTH_PASSWORD" | docker run --rm -i "${CADDY_IMAGE:-caddy:latest}" caddy hash-password)"
+  if [[ -z "$BASIC_AUTH_HASH" ]]; then
+    echo "Failed to generate bcrypt hash for Basic Auth password" >&2
+    exit 1
+  fi
   sed -e "s/__BASIC_AUTH_USER__/${BASIC_AUTH_USER}/" \
-      -e "s|__BASIC_AUTH_PASSWORD_BASE64__|${BASIC_AUTH_PASSWORD_BASE64}|" \
+      -e "s|__BASIC_AUTH_HASH__|${BASIC_AUTH_HASH}|" \
       basic-auth.caddy.example > basic-auth.caddy
   echo "    User:     ${BASIC_AUTH_USER}"
   echo "    Password: ${BASIC_AUTH_PASSWORD}   (shown once — store it now)"
