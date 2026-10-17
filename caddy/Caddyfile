@@ -1,22 +1,29 @@
 # Caddy reverse proxy for this VPS.
 # Runs with `network_mode: host` so Caddy binds directly to host ports 80/443
-# and sees real client IPs (required for the tailscale-only remote_ip matcher).
-# Backend apps run in sibling compose projects and are reached via their
-# localhost port bindings (e.g. reverse_proxy localhost:3001).
+# and sees real client IPs (required for the optional tailscale-only remote_ip
+# matcher). Backend apps run in sibling compose projects and are reached via
+# their localhost port bindings (e.g. reverse_proxy localhost:3001).
 #
 # To expose a site: point its DNS at this server, uncomment a block
 # below with your domain, then run:
 #   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 #
-# TAILSCALE-ONLY SITES (template — set your IPs in tailscale-ips.caddy):
-# every site imports `tailscale-only`, which drops any client that is
-# NOT on the tailnet. Copy tailscale-ips.caddy.example to
-# tailscale-ips.caddy (git-ignored) and put your tailnet IPs there
-# (`tailscale ip -4` on each allowed device, plus 127.0.0.1/8 for local
-# healthchecks). To add/remove a device, edit the IP list in that ONE file.
-# The `not path /.well-known/acme-challenge/*` line lets Let's Encrypt
-# HTTP-01 challenges through so certificates can still be issued/renewed.
-# For a PUBLIC site instead, just omit `import tailscale-only` from its block.
+# ACCESS MODEL — Basic Auth is the default first login:
+# every site imports `basic-auth`, so the browser must authenticate
+# before the request reaches the app (the app's own login still applies
+# behind it). run.sh generates basic-auth.caddy with a strong random
+# password on first run (git-ignored; print/change users there). This
+# works from any browser over HTTPS — no VPN required.
+#
+# TAILSCALE IS OPTIONAL (opt-in, on you): if you also want an IP allowlist
+# on top of Basic Auth, set your tailnet IPs in tailscale-ips.caddy
+# (copy tailscale-ips.caddy.example; git-ignored) and add
+# `import tailscale-only` to a site block in addition to `import basic-auth`.
+# Use `import tailscale-only` INSTEAD of `import basic-auth` only if you
+# never browse from outside the tailnet. The `not path /.well-known/acme-challenge/*`
+# lines in both snippets let Let's Encrypt HTTP-01 challenges through so
+# certificates can still be issued/renewed.
+import basic-auth.caddy
 import tailscale-ips.caddy
 
 {
@@ -24,28 +31,28 @@ import tailscale-ips.caddy
 	# email you@example.com
 }
 
-# Umami analytics (container umami:3000) — Tailscale-only
+# Umami analytics (container umami:3000) — Basic Auth by default
 # analytics.example.com {
-# 	import tailscale-only
+# 	import basic-auth
 # 	reverse_proxy localhost:3000
 # }
 
-# Beszel monitoring (container beszel:8090) — Tailscale-only
+# Beszel monitoring (container beszel:8090) — Basic Auth by default
 # monitor.example.com {
-# 	import tailscale-only
+# 	import basic-auth
 # 	reverse_proxy localhost:8090
 # }
 
 # Sure (container sure:3000 — internal port is always 3000,
-# even though the host maps localhost:3001 for direct access) — Tailscale-only
+# even though the host maps localhost:3001 for direct access) — Basic Auth by default
 # sure.example.com {
-# 	import tailscale-only
+# 	import basic-auth
 # 	reverse_proxy localhost:3001
 # }
 
-# Glance dashboard (container glance:8080) — Tailscale-only
+# Glance dashboard (container glance:8080) — Basic Auth by default
 # glance.example.com {
-# 	import tailscale-only
+# 	import basic-auth
 # 	reverse_proxy localhost:8080
 # }
 
@@ -53,9 +60,9 @@ import tailscale-ips.caddy
 # listens on :80 internally; localhost:9080 is only the host mapping)
 # Headers below are required by Plane behind a proxy (per upstream docs:
 # developers.plane.so/self-hosting/govern/reverse-proxy). Caddy handles
-# the :80→:443 redirect and TLS automatically.
+# the :80→:443 redirect and TLS automatically. — Basic Auth by default
 # plane.example.com {
-# 	import tailscale-only
+# 	import basic-auth
 # 	reverse_proxy localhost:9080 {
 # 		header_up X-Forwarded-Proto {scheme}
 # 		header_up X-Forwarded-Host {host}
@@ -67,33 +74,34 @@ import tailscale-ips.caddy
 
 # Checkmk monitoring (container checkmk:5000 — the site web server
 # listens on :5000 internally; localhost:8072 is only the host mapping.
-# The /cmk/ site path works transparently behind the proxy) — Tailscale-only
+# The /cmk/ site path works transparently behind the proxy) — Basic Auth by default
 # checkmk.domain.dev {
-# 	import tailscale-only
+# 	import basic-auth
 # 	reverse_proxy localhost:8072
 # }
 
 # Uptime Kuma monitoring (container uptime-kuma:3001 — internal port is
 # always 3001, even though the host maps localhost:3002 for direct
-# access) — Tailscale-only
+# access) — Basic Auth by default
 # uptime.domain {
-# 	import tailscale-only
+# 	import basic-auth
 # 	reverse_proxy localhost:3002
 # }
 
 # Checkmate monitoring (container checkmate:52345 — upstream default port
-# internally; the host maps localhost:8073 as 52345 can't bind here) — Tailscale-only. Set CLIENT_HOST to this
-# domain in checkmate/.env for production (CORS + notification links).
+# internally; the host maps localhost:8073 as 52345 can't bind here)
+# — Basic Auth by default. Set CLIENT_HOST to this domain in
+# checkmate/.env for production (CORS + notification links).
 # checkmate.example.com {
-# 	import tailscale-only
+# 	import basic-auth
 # 	reverse_proxy localhost:8073
 # }
 
 # DEFAULT-DENY (active): anything not matching a site above — direct-IP
 # probes, unknown SNI, scanners — gets its connection dropped instead of
-# a 404. Per-site `import tailscale-only` enforces tailnet access on
-# matched domains; this block covers everything else. Keep it last and
-# always active, even with zero sites configured.
+# a 404. Per-site `import basic-auth` (and optional `import tailscale-only`)
+# enforces access control on matched domains; this block covers everything
+# else. Keep it last and always active, even with zero sites configured.
 :80 {
 	abort
 }

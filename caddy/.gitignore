@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# Live Basic Auth credentials (template ships basic-auth.caddy.example).
+basic-auth.caddy
+
 # Live tailnet allow-list (template ships tailscale-ips.caddy.example).
 tailscale-ips.caddy
 

@@ -111,12 +111,13 @@ It is deployed behind Caddy for HTTPS rather than hitting
 
 ```caddyfile
 analytics.example.com {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy umami:3000
 }
 ```
 
-(Caddy reaches Umami over the shared `cloudlab-proxy` Docker network via
-the container DNS name `umami:3000` — plain `localhost` inside the
-Caddyfile would mean the Caddy container itself. `import tailscale-only`
-restricts the site to tailnet clients; see `../caddy/Caddyfile`.)
+(Caddy runs with host networking and proxies to the host-mapped port
+`localhost:3000`. `import basic-auth` is
+the default gate for every site — browser login before the app's own
+login; optionally add `import tailscale-only` for a tailnet allowlist on
+top. See `../caddy/Caddyfile`.)

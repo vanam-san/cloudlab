@@ -50,13 +50,14 @@ In production Sure gets a domain via Caddy (see `../caddy`):
 
 ```caddyfile
 sure.example.com {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy sure:3000
 }
 ```
 
-(`import tailscale-only` restricts the site to tailnet clients; see
-`../caddy/Caddyfile`.)
+(`import basic-auth` is the default gate for every site — browser login
+before the app's own login; optionally add `import tailscale-only` for a
+tailnet allowlist on top. See `../caddy/Caddyfile`.)
 
 Because Caddy terminates HTTPS, tell Rails the proxied requests were
 originally secure — uncomment in `.env` and re-run `./run.sh`:

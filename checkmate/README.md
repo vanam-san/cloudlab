@@ -84,18 +84,19 @@ It pulls the latest images and recreates the containers (`down` +
 ## Production domain
 
 In production Checkmate gets a domain via Caddy (see `../caddy`),
-restricted to tailnet clients like every other site:
+gated by Basic Auth like every other site:
 
 ```caddyfile
 checkmate.example.com {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy checkmate:52345
 }
 ```
 
-(`import tailscale-only` restricts the site to tailnet clients; see
-`../caddy/Caddyfile`. Point the domain's DNS at the VPS first, then
-reload Caddy.)
+(`import basic-auth` prompts for the browser login before the app's own
+login — the default for every site; optionally add `import tailscale-only`
+for a tailnet allowlist on top. See `../caddy/Caddyfile`. Point the
+domain's DNS at the VPS first, then reload Caddy.)
 
 Because the app is reached at another origin now, tell it its public
 URL — set in `.env` and re-run `./run.sh` (restart recreates the app
@@ -160,12 +161,12 @@ It is deployed behind Caddy for HTTPS rather than hitting
 
 ```caddyfile
 checkmate.example.com {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy checkmate:52345
 }
 ```
 
-(Caddy reaches Checkmate over the shared `cloudlab-proxy` Docker network via
-the container DNS name `checkmate:52345` — plain `localhost` inside the
-Caddyfile would mean the Caddy container itself. `import tailscale-only`
-restricts the site to tailnet clients; see `../caddy/Caddyfile`.)
+(Caddy runs with host networking and proxies to the host-mapped port
+`localhost:8073`. `import basic-auth` is the default gate for every site —
+browser login before the app's own login; optionally add
+`import tailscale-only` for a tailnet allowlist on top. See `../caddy/Caddyfile`.)
