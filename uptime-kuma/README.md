@@ -55,20 +55,21 @@ It pulls the latest image and recreates the container (`down` +
 ## Production domain
 
 In production Uptime Kuma gets a domain via Caddy (see `../caddy`),
-restricted to tailnet clients like every other site:
+gated by Basic Auth like every other site:
 
 ```caddyfile
 uptime.domain {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy uptime-kuma:3001
 }
 ```
 
-(`import tailscale-only` restricts the site to tailnet clients; see
-`../caddy/Caddyfile`. Point the domain's DNS at the VPS first, then
-reload Caddy. No app-side URL setting is needed. If you monitor the
-domain itself with Uptime Kuma, use the public URL as the monitor
-target once DNS resolves.)
+(`import basic-auth` prompts for the browser login before the app's own
+login — the default for every site; optionally add `import tailscale-only`
+for a tailnet allowlist on top. See `../caddy/Caddyfile`. Point the
+domain's DNS at the VPS first, then reload Caddy. No app-side URL setting
+is needed. If you monitor the domain itself with Uptime Kuma, use the
+public URL as the monitor target once DNS resolves.)
 
 ## Common commands
 
@@ -122,12 +123,13 @@ It is deployed behind Caddy for HTTPS rather than hitting
 
 ```caddyfile
 uptime.domain {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy uptime-kuma:3001
 }
 ```
 
-(Caddy reaches Uptime Kuma over the shared `cloudlab-proxy` Docker network via
-the container DNS name `uptime-kuma:3001` — plain `localhost` inside the
-Caddyfile would mean the Caddy container itself. `import tailscale-only`
-restricts the site to tailnet clients; see `../caddy/Caddyfile`.)
+(Caddy runs with host networking and proxies to the host-mapped port
+`localhost:3002`. `import basic-auth` is
+the default gate for every site — browser login before the app's own
+login; optionally add `import tailscale-only` for a tailnet allowlist on
+top. See `../caddy/Caddyfile`.)

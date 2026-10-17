@@ -58,7 +58,7 @@ the required proxy headers is already there, commented):
 
 ```caddyfile
 plane.example.com {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy plane:80 {
 		header_up X-Forwarded-Proto {scheme}
 		header_up X-Forwarded-Host {host}
@@ -66,6 +66,10 @@ plane.example.com {
 	}
 }
 ```
+
+(`import basic-auth` prompts for the browser login before the app's own
+login — the default for every site; optionally add `import tailscale-only`
+for a tailnet allowlist on top. See `../caddy/Caddyfile`.)
 
 Then set the domain overrides in `.env` and re-run `./run.sh` (it rewrites
 them into `plane.env`; required for correct links, CORS, and uploads):

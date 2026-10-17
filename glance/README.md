@@ -38,15 +38,19 @@ config in `./config` is a bind mount and is untouched by the update.
 
 ## Production domain
 
-In production Glance gets a domain via Caddy (see `../caddy`), restricted
-to tailnet clients like every other site:
+In production Glance gets a domain via Caddy (see `../caddy`), gated by
+Basic Auth like every other site:
 
 ```caddyfile
 glance.example.com {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy glance:8080
 }
 ```
+
+(`import basic-auth` prompts for the browser login before the app's own
+login — the default for every site; optionally add `import tailscale-only`
+for a tailnet allowlist on top. See `../caddy/Caddyfile`.)
 
 Then update the bookmark URLs in `config/glance.yml` from `localhost`
 to the production domains.

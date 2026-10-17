@@ -1,3 +1,5 @@
+# Optional (opt-in) tailnet allow-list — only needed if you add
+# `import tailscale-only` to a site block on top of the default Basic Auth.
 # Template copy: cp tailscale-ips.caddy.example tailscale-ips.caddy,
 # then replace the placeholders with your tailnet IPs (`tailscale ip -4`
 # on each allowed device). The live file is git-ignored — never commit it.

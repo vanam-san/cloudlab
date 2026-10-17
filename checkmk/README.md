@@ -126,20 +126,21 @@ with `docker compose cp`).
 
 ## Production domain
 
-In production Checkmk gets a domain via Caddy (see `../caddy`), restricted
-to tailnet clients like every other site:
+In production Checkmk gets a domain via Caddy (see `../caddy`), gated by
+Basic Auth like every other site:
 
 ```caddyfile
 checkmk.domain.dev {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy checkmk:5000
 }
 ```
 
-(`import tailscale-only` restricts the site to tailnet clients; see
-`../caddy/Caddyfile`. Point the domain's DNS at the VPS first, then
-reload Caddy. No app-side URL setting is needed — the `/cmk/` site path
-works behind the proxy as-is.)
+(`import basic-auth` prompts for the browser login before the app's own
+login — the default for every site; optionally add `import tailscale-only`
+for a tailnet allowlist on top. See `../caddy/Caddyfile`. Point the
+domain's DNS at the VPS first, then reload Caddy. No app-side URL setting
+is needed — the `/cmk/` site path works behind the proxy as-is.)
 
 ## Common commands
 
@@ -189,12 +190,12 @@ It is deployed behind Caddy for HTTPS rather than hitting
 
 ```caddyfile
 checkmk.domain.dev {
-	import tailscale-only
+	import basic-auth
 	reverse_proxy checkmk:5000
 }
 ```
 
-(Caddy reaches Checkmk over the shared `cloudlab-proxy` Docker network via
-the container DNS name `checkmk:5000` — plain `localhost` inside the
-Caddyfile would mean the Caddy container itself. `import tailscale-only`
-restricts the site to tailnet clients; see `../caddy/Caddyfile`.)
+(Caddy runs with host networking and proxies to the host-mapped port
+`localhost:8072`. `import basic-auth` is the default gate for every site —
+browser login before the app's own login; optionally add
+`import tailscale-only` for a tailnet allowlist on top. See `../caddy/Caddyfile`.)

@@ -41,13 +41,16 @@ jobs:
         run: |
           cd caddy
           created=""
-          if [ ! -f tailscale-ips.caddy ]; then
-            cp tailscale-ips.caddy.example tailscale-ips.caddy
-            created=1
-          fi
+          for f in basic-auth.caddy tailscale-ips.caddy; do
+            if [ ! -f "$f" ]; then
+              cp "$f.example" "$f"
+              created="$created $f"
+            fi
+          done
           docker run --rm \
             -v ./Caddyfile:/etc/caddy/Caddyfile:ro \
+            -v ./basic-auth.caddy:/etc/caddy/basic-auth.caddy:ro \
             -v ./tailscale-ips.caddy:/etc/caddy/tailscale-ips.caddy:ro \
             caddy:latest \
             caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile
-          [ -n "$created" ] && rm -f tailscale-ips.caddy
+          for f in $created; do rm -f "$f"; done

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # One-command deploy for Caddy: ./run.sh
 # 1. Creates .env from .env.example (git-ignored, never committed).
-# 2. Pulls the Caddy image.
-# 3. Validates the Caddyfile before (re)starting, so a bad config
+# 2. Creates basic-auth.caddy from its .example with a strong random
+#    password (printed once) — the default browser-access gate.
+# 3. Creates tailscale-ips.caddy from its .example (git-ignored).
+# 4. Pulls the Caddy image.
+# 5. Validates the Caddyfile before (re)starting, so a bad config
 #    can never take down the running proxy.
-# 4. Starts the stack and waits until the container reports healthy.
+# 6. Starts the stack and waits until the container reports healthy.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -18,7 +21,7 @@ fi
 
 if [[ ! -f "tailscale-ips.caddy" ]]; then
   echo "==> Creating tailscale-ips.caddy from tailscale-ips.caddy.example"
-  echo "    Edit it with your tailnet IPs before exposing any site."
+  echo "    Only needed if you opt into `import tailscale-only` on a site."
   cp tailscale-ips.caddy.example tailscale-ips.caddy
 fi
 
@@ -33,9 +36,26 @@ docker network inspect cloudlab-proxy >/dev/null 2>&1 || docker network create c
 echo "==> Pulling latest images (${CADDY_IMAGE:-caddy:latest})"
 docker compose pull
 
+# Default browser-access gate: HTTP Basic Auth on every site. Generate
+# the live snippet (git-ignored) with a strong random password, stored
+# only as a bcrypt hash. Printed once — store it in your password manager.
+if [[ ! -f "basic-auth.caddy" ]]; then
+  echo "==> Creating basic-auth.caddy (Basic Auth credentials)"
+  BASIC_AUTH_USER="${BASIC_AUTH_USER:-admin}"
+  BASIC_AUTH_PASSWORD="$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)"
+  BASIC_AUTH_HASH="$(printf '%s\n' "$BASIC_AUTH_PASSWORD" | docker run --rm -i "${CADDY_IMAGE:-caddy:latest}" caddy hash-password)"
+  sed -e "s/__BASIC_AUTH_USER__/${BASIC_AUTH_USER}/" \
+      -e "s|__BASIC_AUTH_HASH__|${BASIC_AUTH_HASH}|" \
+      basic-auth.caddy.example > basic-auth.caddy
+  echo "    User:     ${BASIC_AUTH_USER}"
+  echo "    Password: ${BASIC_AUTH_PASSWORD}   (shown once — store it now)"
+  echo "    Edit ./basic-auth.caddy to add/change users (bcrypt hashes), then reload Caddy."
+fi
+
 echo "==> Validating Caddyfile"
-# Both files are mounted because Caddyfile does `import tailscale-ips.caddy`.
+# All three files are mounted because the Caddyfile imports both snippets.
 docker run --rm -v ./Caddyfile:/etc/caddy/Caddyfile:ro \
+  -v ./basic-auth.caddy:/etc/caddy/basic-auth.caddy:ro \
   -v ./tailscale-ips.caddy:/etc/caddy/tailscale-ips.caddy:ro \
   "${CADDY_IMAGE:-caddy:latest}" \
   caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile
