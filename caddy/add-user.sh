@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # add-user.sh — interactively add a new user to Caddy's Basic Auth file.
 #
-# Prompts for a username and password, appends a `user "pass"` entry to the
-# `basic_auth` block in ./basic-auth.caddy, validates the Caddyfile with a
+# Prompts for a username and password, appends a `user base64(pass)` entry to
+# the `basic_auth` block in ./basic-auth.caddy, validates the Caddyfile with a
 # throwaway Caddy container, then reloads Caddy.
 #
-# Credentials are stored as plain `user pass` pairs in plaintext, matching
-# this repo's convention. basic-auth.caddy is git-ignored — never commit it.
+# Caddy's http_basic provider base64-decodes the stored password, so credentials
+# are stored as `username base64(plaintext_password)`. basic-auth.caddy is
+# git-ignored — never commit it.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -60,8 +61,9 @@ case "$PASS" in
   *\"*|*\\*) echo "Password must not contain double quotes or backslashes" >&2; exit 1 ;;
 esac
 
-# Tab-indented entry, password quoted so spaces/#/$ etc. are safe.
-ENTRY=$'\t'"${USER} \"${PASS}\""
+# Tab-indented entry: username base64(password). Caddy base64-decodes the
+# stored password and compares it with the plaintext sent by the client.
+ENTRY=$'\t'"${USER} $(printf '%s' "$PASS" | base64 -w0)"
 
 # --- build candidate file in a temp file (never in place yet) ----------------
 TMP="$(mktemp)"
@@ -130,4 +132,4 @@ else
   echo "Caddy container is not running — start it with ./run.sh (or docker compose up -d)."
 fi
 
-echo "Done. Credentials in $AUTH_FILE are plaintext — keep the file private."
+echo "Done. Credentials in $AUTH_FILE are base64-encoded — keep the file private."

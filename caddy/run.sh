@@ -43,12 +43,12 @@ if [[ ! -f "basic-auth.caddy" ]]; then
   echo "==> Creating basic-auth.caddy (Basic Auth credentials)"
   BASIC_AUTH_USER="${BASIC_AUTH_USER:-admin}"
   BASIC_AUTH_PASSWORD="$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)"
+  BASIC_AUTH_PASSWORD_BASE64="$(printf '%s' "$BASIC_AUTH_PASSWORD" | base64 -w0)"
   sed -e "s/__BASIC_AUTH_USER__/${BASIC_AUTH_USER}/" \
-      -e "s|__BASIC_AUTH_PASSWORD__|${BASIC_AUTH_PASSWORD}|" \
+      -e "s|__BASIC_AUTH_PASSWORD_BASE64__|${BASIC_AUTH_PASSWORD_BASE64}|" \
       basic-auth.caddy.example > basic-auth.caddy
   echo "    User:     ${BASIC_AUTH_USER}"
   echo "    Password: ${BASIC_AUTH_PASSWORD}   (shown once — store it now)"
-  echo "    Edit ./basic-auth.caddy to add/change users (plain passwords), then reload Caddy."
 fi
 
 echo "==> Validating Caddyfile"

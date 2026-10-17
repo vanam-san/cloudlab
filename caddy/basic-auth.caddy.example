@@ -6,14 +6,16 @@
 # credentials before the request reaches the app (which still has its own
 # login behind it). Add/remove users by editing the block below, then:
 #   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
-# Credentials are plain `username password` pairs — no hashing step.
-# (Caddy accepts bcrypt hashes too if you ever prefer them at rest.)
+# IMPORTANT: Caddy's http_basic provider base64-decodes the stored password.
+# Store passwords as `username base64(plaintext_password)`.
+# To generate: echo -n 'plaintext' | base64
+# (Caddy also accepts bcrypt hashes starting with $2y$.)
 (basic-auth) {
 	@needs_auth {
 		not path /.well-known/acme-challenge/*
 	}
 	basic_auth @needs_auth {
-		__BASIC_AUTH_USER__ __BASIC_AUTH_PASSWORD__
-		# anotheruser some-other-plain-password
+		__BASIC_AUTH_USER__ __BASIC_AUTH_PASSWORD_BASE64__
+		# anotheruser base64-here
 	}
 }
