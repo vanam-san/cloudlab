@@ -8,21 +8,6 @@ traffic.
 
 **8 apps + Caddy · 1 VPS · 1 command per service · automatic HTTPS.**
 
-```mermaid
-flowchart LR
-    Internet --> Caddy["Caddy :80/:443<br/>auto-TLS, Basic Auth, default-deny"]
-    Caddy --> Umami["umami:3000"]
-    Caddy --> Beszel["beszel:8090"]
-    Caddy --> Glance["glance:8080"]
-    Caddy --> Sure["sure:3000"]
-    Caddy --> Plane["plane:80"]
-    Caddy --> Checkmk["checkmk:5000"]
-    Caddy --> Kuma["uptime-kuma:3001"]
-    Caddy --> Mate["checkmate:52345"]
-    Umami & Beszel & Glance & Sure & Plane & Checkmk & Kuma & Mate --- Net[("cloudlab-proxy<br/>shared Docker network")]
-    Local["127.0.0.1:PORT<br/>direct local access"] -.-> Umami
-```
-
 ## Architecture
 
 All backends join the shared **`cloudlab-proxy` Docker network**. [Caddy](caddy/) is the only
