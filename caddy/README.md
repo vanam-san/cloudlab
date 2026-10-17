@@ -25,8 +25,8 @@ That one command:
 
 1. Creates `.env` from `.env.example` (if missing)
 2. Creates `basic-auth.caddy` from its `.example` (if missing) with a
-   **strong random password — printed once, store it now** (it's kept
-   only as a bcrypt hash, in a git-ignored file)
+   **strong random password — printed once, store it now** (kept as a
+   plain username/password pair in a git-ignored file)
 3. Creates `tailscale-ips.caddy` from its `.example` (if missing) —
    only needed if you opt into Tailscale IP filtering
 4. Pulls the latest Caddy image
@@ -62,11 +62,11 @@ and config persist in the `caddy-data` / `caddy-config` Docker volumes.
 
 ## Managing Basic Auth users
 
-Credentials live in `basic-auth.caddy` (git-ignored). To change the
-password or add a user: generate a bcrypt hash, edit the file, reload:
+Credentials live in `basic-auth.caddy` (git-ignored) as plain
+`username password` pairs. To change the password or add a user, edit
+the file and reload:
 
 ```bash
-docker run --rm -i caddy:latest caddy hash-password   # type password on stdin
 docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 ```
 

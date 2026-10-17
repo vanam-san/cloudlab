@@ -38,18 +38,17 @@ docker compose pull
 
 # Default browser-access gate: HTTP Basic Auth on every site. Generate
 # the live snippet (git-ignored) with a strong random password, stored
-# only as a bcrypt hash. Printed once — store it in your password manager.
+# as a plain username/password pair. Printed once — store it now.
 if [[ ! -f "basic-auth.caddy" ]]; then
   echo "==> Creating basic-auth.caddy (Basic Auth credentials)"
   BASIC_AUTH_USER="${BASIC_AUTH_USER:-admin}"
   BASIC_AUTH_PASSWORD="$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)"
-  BASIC_AUTH_HASH="$(printf '%s\n' "$BASIC_AUTH_PASSWORD" | docker run --rm -i "${CADDY_IMAGE:-caddy:latest}" caddy hash-password)"
   sed -e "s/__BASIC_AUTH_USER__/${BASIC_AUTH_USER}/" \
-      -e "s|__BASIC_AUTH_HASH__|${BASIC_AUTH_HASH}|" \
+      -e "s|__BASIC_AUTH_PASSWORD__|${BASIC_AUTH_PASSWORD}|" \
       basic-auth.caddy.example > basic-auth.caddy
   echo "    User:     ${BASIC_AUTH_USER}"
   echo "    Password: ${BASIC_AUTH_PASSWORD}   (shown once — store it now)"
-  echo "    Edit ./basic-auth.caddy to add/change users (bcrypt hashes), then reload Caddy."
+  echo "    Edit ./basic-auth.caddy to add/change users (plain passwords), then reload Caddy."
 fi
 
 echo "==> Validating Caddyfile"
