@@ -1,16 +1,8 @@
 # Caddy reverse proxy for this VPS.
-# Backend apps run in sibling compose projects on the shared
-# `cloudlab-proxy` Docker network, reachable here via Docker DNS names
-# (container-internal ports — not the localhost host ports).
-#
-# NAMING RULE (learned the hard way, 2026-09): a compose service name is
-# registered as DNS on EVERY network it joins, across ALL stacks sharing
-# `cloudlab-proxy`. Keep every proxied service name globally unique and
-# never generic (`web`, `api`, `db`, ...). A generic `web` service once
-# answered on the shared net, so another app's proxy route `/*` to
-# `web:3000` served the wrong app — flipping with container restart
-# order, which is why it looked fine locally but broke on the VPS.
-# (Fix: name each service after its app, e.g. `sure`, not `web`.)
+# Runs with `network_mode: host` so Caddy binds directly to host ports 80/443
+# and sees real client IPs (required for the tailscale-only remote_ip matcher).
+# Backend apps run in sibling compose projects and are reached via their
+# localhost port bindings (e.g. reverse_proxy localhost:3001).
 #
 # To expose a site: point its DNS at this server, uncomment a block
 # below with your domain, then run:
@@ -35,26 +27,26 @@ import tailscale-ips.caddy
 # Umami analytics (container umami:3000) — Tailscale-only
 # analytics.example.com {
 # 	import tailscale-only
-# 	reverse_proxy umami:3000
+# 	reverse_proxy localhost:3000
 # }
 
 # Beszel monitoring (container beszel:8090) — Tailscale-only
 # monitor.example.com {
 # 	import tailscale-only
-# 	reverse_proxy beszel:8090
+# 	reverse_proxy localhost:8090
 # }
 
 # Sure (container sure:3000 — internal port is always 3000,
 # even though the host maps localhost:3001 for direct access) — Tailscale-only
 # sure.example.com {
 # 	import tailscale-only
-# 	reverse_proxy sure:3000
+# 	reverse_proxy localhost:3001
 # }
 
 # Glance dashboard (container glance:8080) — Tailscale-only
 # glance.example.com {
 # 	import tailscale-only
-# 	reverse_proxy glance:8080
+# 	reverse_proxy localhost:8080
 # }
 
 # Plane project management (container plane:80 — Plane's built-in proxy
@@ -64,7 +56,7 @@ import tailscale-ips.caddy
 # the :80→:443 redirect and TLS automatically.
 # plane.example.com {
 # 	import tailscale-only
-# 	reverse_proxy plane:80 {
+# 	reverse_proxy localhost:9080 {
 # 		header_up X-Forwarded-Proto {scheme}
 # 		header_up X-Forwarded-Host {host}
 # 		header_up X-Real-IP {remote_host}
@@ -78,7 +70,7 @@ import tailscale-ips.caddy
 # The /cmk/ site path works transparently behind the proxy) — Tailscale-only
 # checkmk.domain.dev {
 # 	import tailscale-only
-# 	reverse_proxy checkmk:5000
+# 	reverse_proxy localhost:8072
 # }
 
 # Uptime Kuma monitoring (container uptime-kuma:3001 — internal port is
@@ -86,7 +78,7 @@ import tailscale-ips.caddy
 # access) — Tailscale-only
 # uptime.domain {
 # 	import tailscale-only
-# 	reverse_proxy uptime-kuma:3001
+# 	reverse_proxy localhost:3002
 # }
 
 # Checkmate monitoring (container checkmate:52345 — upstream default port
@@ -94,7 +86,7 @@ import tailscale-ips.caddy
 # domain in checkmate/.env for production (CORS + notification links).
 # checkmate.example.com {
 # 	import tailscale-only
-# 	reverse_proxy checkmate:52345
+# 	reverse_proxy localhost:8073
 # }
 
 # DEFAULT-DENY (active): anything not matching a site above — direct-IP

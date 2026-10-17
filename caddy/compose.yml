@@ -2,31 +2,24 @@
 # Image: caddy:latest
 # Docs: https://caddyserver.com/docs/
 #
-# Role: Caddy is the only service exposed to the network (ports 80/443).
+# Role: Caddy binds directly to host ports 80/443 via network_mode: host
+# so it sees real client IPs (required for the tailscale-only remote_ip
+# matcher — Docker port mapping hides the source IP behind the bridge).
 # All backend apps (umami, beszel, sure, glance, plane, checkmk,
-# uptime-kuma, checkmate) join the shared
-# `cloudlab-proxy` Docker network and get production domains here via
-# reverse_proxy blocks using Docker DNS names (e.g. `reverse_proxy umami:3000`).
-# Localhost port bindings are kept for direct local access, but Caddy
-# never uses them — it talks to containers over the shared network.
+# uptime-kuma, checkmate) expose localhost-only port bindings; Caddy
+# reaches them via reverse_proxy localhost:<port>.
 #
 # Setup notes:
 # - Healthcheck queries the admin API (127.0.0.1:2019/config) instead of
 #   port 80: with no sites configured Caddy answers 404 on :80, while the
 #   admin endpoint always returns 200 while Caddy is running.
-# - The `proxy` network is external (created by ./run.sh via
-#   `docker network create cloudlab-proxy`) so `docker compose down`
-#   never deletes it out from under the other stacks.
 
 services:
   caddy:
     image: ${CADDY_IMAGE:-caddy:latest}
     container_name: caddy
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+    network_mode: host
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       # Tailnet allow-list (git-ignored live file; see tailscale-ips.caddy.example).
@@ -34,8 +27,6 @@ services:
       - ./tailscale-ips.caddy:/etc/caddy/tailscale-ips.caddy:ro
       - caddy-data:/data
       - caddy-config:/config
-    networks:
-      - proxy
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:2019/config/ || exit 1"]
       interval: 30s
@@ -46,8 +37,3 @@ services:
 volumes:
   caddy-data:
   caddy-config:
-
-networks:
-  proxy:
-    name: cloudlab-proxy
-    external: true
