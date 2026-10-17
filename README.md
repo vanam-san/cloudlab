@@ -76,6 +76,29 @@ domains/HTTPS.
 > set your tailnet IPs in the `tailscale-only` snippet, or omit
 > `import tailscale-only` from a site block to make it public.
 
+### Accessing sites via Tailscale (no public DNS)
+
+If the VPS has no public DNS (or you don't want to point DNS at it yet),
+you can still reach the sites over Tailscale by mapping each domain to
+the **server's Tailscale IP** in your client's hosts file. Look up the
+server's Tailscale IP with `tailscale ip -4` on the VPS, then add one
+line per site to the hosts file on your laptop/workstation:
+
+```
+100.x.x.x  analytics.example.com
+100.x.x.x  glance.example.com
+```
+
+- **Windows** (as Administrator): `C:\Windows\System32\drivers\etc\hosts`,
+  then `ipconfig /flushdns`.
+- **Linux/macOS**: `/etc/hosts`, then restart the browser.
+
+The IP in the hosts file must match the server's Tailscale IP — Tailscale
+carries the request over the tunnel, so Caddy sees your device's tailnet
+IP as the source and the `tailscale-only` allowlist passes. TLS is
+unaffected: Caddy still serves the real Let's Encrypt certificate for the
+domain.
+
 ## Requirements
 
 - A Linux VPS (or any machine) with [Docker Engine](https://docs.docker.com/engine/install/)
